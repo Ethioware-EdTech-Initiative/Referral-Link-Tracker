@@ -1,7 +1,7 @@
 # ALX Ethiopia Referral Link Tracker
 
 ![Ethioware Logo](https://ethioware.org/assets/img/logo-mini.png)
-![ALX Logo](https://ethiopia.alxafrica.com/wp-content/uploads/2025/02/logo-city-ethiopia.svg)
+![ALX Logo](https://www.alxafrica.com/wp-content/uploads/2023/12/logo-black.svg)
 
 ## Welcome Interns!
 
@@ -79,7 +79,7 @@ Make sure you have the following software installed on your machine:
 
 1.  **Clone the repo:**
     ```sh
-    git clone [repository-url]
+    git clone https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker/
     ```
 2.  **Navigate to the project directory:**
     ```sh
