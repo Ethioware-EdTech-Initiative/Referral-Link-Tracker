@@ -1,0 +1,8 @@
+# Default to LF line endings for all text files
+* text=auto eol=lf
+
+# Ensure shell scripts always use LF
+*.sh text eol=lf
+
+# Python files should also use LF
+*.py text eol=lf
