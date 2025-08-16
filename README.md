@@ -55,12 +55,14 @@ The beta version will include the following deliverables:
 
 The technology stack for this project must integrate with the existing website infrastructure. The specific stack will be finalized during the planning phase.
 
-* **Frontend:** `[To be decided by the team - for admin dashboard and testing pages]`
-* **Backend:** `[To be decided by the team - for link generation and data aggregation]`
-* **Database:** `[To be decided by the team]`
-* **Automation/API:** Google Sheets API
-* **Version Control:** Git / GitHub
-* **Deployment:** `[To be decided by the team - likely an Ethioware subdomain]`
+
+* **Frontend:** Next.js 14+ (App Router) with TypeScript, Tailwind CSS + Headless UI / Radix UI; lightweight charts with Recharts; SWR for client-side data fetching; React Hook Form + Zod for form validation; TanStack Table with virtualization; JWT-based authentication via Next.js API route proxy; Zustand for minimal global state; WAI-ARIA compliant accessibility.
+* **Backend:** Django & Django REST Framework (DRF) for core APIs; Redis for caching and session storage; Celery + Redis broker for background tasks; Google Sheets API for automated reporting/export; PostgreSQL as the relational database.
+* **Database:** PostgreSQL with indexing, constraints, and optimized relational schema.
+* **Automation/API:** Google Sheets API for exports and reporting.
+* **Version Control:** Git / GitHub with branching strategy for dev, feature, and main branches.
+* **Deployment:** Vercel for development server; Ethioware subdomain for production deployment.
+
 
 ---
 
@@ -73,7 +75,13 @@ To get a local copy up and running, please follow these steps.
 Make sure you have the following software installed on your machine:
 
 * **Git:** To clone the repository and manage versions.
-* `[Add any other prerequisites here, like Node.js, Python, Docker, etc., once decided]`
+* **Node.js (v18+) & npm/yarn:** Required for building and running the frontend (Next.js, Tailwind, Recharts).
+* **Python (v3.10+) & pip:** Required for backend (Django, DRF, Celery).
+* **Redis:** For caching and background task broker.
+* **PostgreSQL:** Database server for relational data storage.
+* **Docker (optional):** For containerized development and deployment.
+* **Environment variables:** Required for JWT secrets, Google Sheets API keys, and database credentials.
+
 
 ### Installation
 
