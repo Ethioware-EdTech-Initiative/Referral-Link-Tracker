@@ -42,12 +42,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.full_name
     
 class Officer(models.Model):
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='officer_profile')
 
     def __str__(self):
         return f" Officer Name {self.user.full_name}"
 
 class Audit_Log(models.Model):
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audit_logs')
     action = models.CharField(max_length=255, choices=[
         ('create', 'Create'),
