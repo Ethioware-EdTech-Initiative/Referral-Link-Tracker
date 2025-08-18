@@ -40,3 +40,32 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def __str__(self):
         return self.full_name
+    
+class Officer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='officer_profile')
+
+    def __str__(self):
+        return f" Officer Name {self.user.full_name}"
+
+class Audit_Log(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audit_logs')
+    action = models.CharField(max_length=255, choices=[
+        ('create', 'Create'),
+        ('update', 'Update'),
+        ('delete', 'Delete'),
+        ('view', 'View'),
+    ])
+
+    description = models.TextField(blank=True, null=True)
+    target_type = models.CharField(max_length=50, choices=[
+        ('campaign', 'Campaign'),
+        ('officer', 'Officer'),
+        ('link', 'Link'),
+    ])
+    target_id = models.UUIDField(blank=True, null=True)
+    user_agent = models.CharField(max_length=512, blank=True, null=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.full_name} - {self.action} at {self.timestamp}"
