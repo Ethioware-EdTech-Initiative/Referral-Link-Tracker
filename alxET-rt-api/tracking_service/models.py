@@ -2,7 +2,6 @@ from django.db import models
 from dashboard_service.models import ReferralLink
 import uuid
 
-# Create your models here.
 class ClickEvent(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     referral_link = models.ForeignKey(ReferralLink, on_delete=models.CASCADE, related_name='click_events')
