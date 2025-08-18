@@ -84,7 +84,33 @@ Make sure you have the following software installed on your machine:
 
 
 ### Installation
+---
+### Frontend Setup
 
+1. **Navigate to the frontend directory:**
+    ```sh
+    cd frontend
+    ```
+2. **Install dependencies:**
+    ```sh
+    npm install
+    ```
+3. **Configure environment variables:**
+    - Copy `.env.example` to `.env.local`:
+      ```sh
+      cp .env.example .env.local
+      ```
+    - Fill in the required values provided by the team lead.
+
+4. **Run the development server:**
+    ```sh
+    npm run dev
+    ```
+    The application will be available at [http://localhost:3000](http://localhost:3000).
+
+---
+
+### Backend Setup
 1.  **Clone the repo:**
     ```sh
     git clone https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker/
