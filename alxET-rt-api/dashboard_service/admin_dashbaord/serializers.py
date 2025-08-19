@@ -6,7 +6,7 @@ from auth_service.models import Officer, Audit_Log, User
 class UserMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email"]
+        fields = ["id", "email", "full_name"]
 
 
 class OfficerSerializer(serializers.ModelSerializer):
