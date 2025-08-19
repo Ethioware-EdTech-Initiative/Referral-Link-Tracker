@@ -1,0 +1,8 @@
+openapi: 3.0.3
+info:
+  title: ALX Recruitment Tracker API
+  version: 1.0.0
+  description: API for managing recruitment campaigns, referral links, and tracking
+    events.
+paths: {}
+components: {}
