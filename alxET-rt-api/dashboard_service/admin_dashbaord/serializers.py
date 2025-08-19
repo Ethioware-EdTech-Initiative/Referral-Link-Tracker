@@ -14,14 +14,16 @@ class OfficerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Officer
-        fields = ["id", "user", "is_active", "created_at", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        fields = ["id", "user"]
+        read_only_fields = ["id"]
 
 
 class OfficerCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Officer
-        fields = ["user", "is_active"]
+        fields = ["user"]
+
+
 
 
 class CampaignSerializer(serializers.ModelSerializer):
@@ -84,7 +86,7 @@ class ReferralLinkSerializer(serializers.ModelSerializer):
             "click_count",
             "signup_count",
             "is_active",
-            "revoked_at",
+            "revoke_at",
             "created_at",
             "updated_at",
         ]
@@ -100,7 +102,7 @@ class ReferralLinkSerializer(serializers.ModelSerializer):
 class ReferralLinkCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReferralLink
-        fields = ["officer", "campaign", "full_link", "ref_code", "is_active", "revoked_at"]
+        fields = ["officer", "campaign", "full_link", "ref_code", "is_active", "revoke_at"]
         read_only_fields = ["id", "click_count", "signup_count", "created_at", "updated_at"]
 
 
@@ -136,9 +138,9 @@ class AuditLogSerializer(serializers.ModelSerializer):
             "action",
             "target_type",
             "target_id",
-            "details",
+            "description",
             "user_agent",
             "ip_address",
-            "created_at",
+            "timestamp",
         ]
         read_only_fields = fields
