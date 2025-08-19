@@ -52,4 +52,4 @@ class DailyMetrics(models.Model):
 
 
     def __str__(self):
-        return f"Metrics for {self.campaign.name} on {self.date}"
+        return f"Metrics for {self.campaign.name} on {self.metric_date}"
