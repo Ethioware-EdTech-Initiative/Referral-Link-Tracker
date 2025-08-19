@@ -3,18 +3,13 @@ from ..models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMet
 from auth_service.models import Officer, Audit_Log, User
 
 
-class UserMiniSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["id", "email", "full_name"]
-
-
 class OfficerSerializer(serializers.ModelSerializer):
-    user = UserMiniSerializer(read_only=True)
+    full_name = serializers.CharField(source="user.full_name", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta:
         model = Officer
-        fields = ["id", "user"]
+        fields = ["id", "full_name", "email"]
         read_only_fields = ["id"]
 
 
@@ -22,8 +17,7 @@ class OfficerCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Officer
         fields = ["user"]
-
-
+        # You only pass user_id when creating
 
 
 class CampaignSerializer(serializers.ModelSerializer):
@@ -53,7 +47,6 @@ class CampaignCreateUpdateSerializer(serializers.ModelSerializer):
         fields = ["name", "description", "start_date", "end_date", "is_active"]
 
 
-
 class OfficerCampaignAssignmentSerializer(serializers.ModelSerializer):
     officer = OfficerSerializer(read_only=True)
     campaign = CampaignSerializer(read_only=True)
@@ -68,7 +61,6 @@ class OfficerCampaignAssignmentCreateSerializer(serializers.ModelSerializer):
         model = OfficerCampaignAssignment
         fields = ["officer", "campaign"]
         read_only_fields = ["id", "assigned_at"]
-
 
 
 class ReferralLinkSerializer(serializers.ModelSerializer):
@@ -106,7 +98,6 @@ class ReferralLinkCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "click_count", "signup_count", "created_at", "updated_at"]
 
 
-
 class DailyMetricsSerializer(serializers.ModelSerializer):
     campaign = serializers.StringRelatedField()
     officer = serializers.StringRelatedField()
@@ -126,15 +117,16 @@ class DailyMetricsSerializer(serializers.ModelSerializer):
         ]
 
 
-
 class AuditLogSerializer(serializers.ModelSerializer):
-    user = UserMiniSerializer(read_only=True)
+    user_full_name = serializers.CharField(source="user.full_name", read_only=True)
+    user_email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta:
         model = Audit_Log
         fields = [
             "id",
-            "user",
+            "user_full_name",
+            "user_email",
             "action",
             "target_type",
             "target_id",
