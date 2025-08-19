@@ -28,7 +28,7 @@ urlpatterns = [
     # path("alxET-rt-api/dashboard/admin-dash/", include("dashboard_service.admin_dashbaord.urls")),
 
     
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('alxET-rt-api/doc/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('alxET-rt-api/doc/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('alxET-rt-api/doc/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
