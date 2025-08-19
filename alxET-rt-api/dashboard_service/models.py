@@ -2,7 +2,6 @@ from django.db import models
 import uuid
 from auth_service.models import Officer
 
-# Create your models here.
 class Campaign(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     name = models.CharField(max_length=255)
