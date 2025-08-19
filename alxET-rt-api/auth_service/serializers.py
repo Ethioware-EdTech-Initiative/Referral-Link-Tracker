@@ -1,4 +1,4 @@
-from .models import User
+from .models import User, Officer
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import  validate_password
@@ -16,6 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
         user = User(**validated_data)
         user.set_password(password)
         user.save()
+        if not user.is_staff:
+            Officer.objects.create(user=user)
         return user
 
     def update(self, instance, validated_data):

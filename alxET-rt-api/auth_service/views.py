@@ -7,13 +7,13 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from .serializers import UserSerializer, LoginSerializer, ChangePasswordSerializer
-from .models import User
+from .models import User, Officer
 from .tokens import create_jwt_pair_user
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
+    
     def get_queryset(self):
         user = self.request.user
         if user.is_active and user.is_staff:
@@ -71,7 +71,7 @@ class LogOutView(APIView):
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
-
+    
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():
