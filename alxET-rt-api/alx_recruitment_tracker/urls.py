@@ -19,8 +19,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('alx-rt-api/auth/', include('auth_service.urls')),          
-    # path('alx-rt-api/tracking/', include('tracking_service.urls')), 
+    path('alx-rt-api/auth/', include('auth_service.urls')),
+    # path('alx-rt-api/tracking/', include('tracking_service.urls')),
     # path('alx-rt-api/dashboard/', include('dashboard_service.urls')),
     # path('alx-rt-api/data-sync/', include('data_sync_worker.urls')),
 ]
