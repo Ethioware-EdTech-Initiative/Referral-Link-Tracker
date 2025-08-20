@@ -17,7 +17,6 @@ class OfficerCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Officer
         fields = ["user"]
-        # You only pass user_id when creating
 
 
 class CampaignSerializer(serializers.ModelSerializer):
