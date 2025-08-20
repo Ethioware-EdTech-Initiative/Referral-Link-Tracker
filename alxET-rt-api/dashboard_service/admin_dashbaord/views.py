@@ -20,14 +20,27 @@ from .serializers import (
     AuditLogSerializer,
 )
 
+from ..utils import generate_referral_code
+from django.conf import settings
+
 
 class OfficerViewSet(viewsets.ModelViewSet):
-    queryset = Officer.objects.all()
 
-    def get_serializer_class(self):
-        if self.action == "create":
-            return OfficerCreateSerializer
-        return OfficerSerializer
+    queryset = Officer.objects.select_related("user")
+    serializer_class = OfficerSerializer
+    http_method_names = ["get", "delete"]
+
+    def create(self, request, *args, **kwargs):
+        return Response({"detail": "Create not allowed for officers."},
+                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        return Response({"detail": "Update not allowed for officers."},
+                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        return Response({"detail": "Partial update not allowed for officers."},
+                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class CampaignViewSet(viewsets.ModelViewSet):
@@ -56,19 +69,47 @@ class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
 
 
 class ReferralLinkViewSet(viewsets.ModelViewSet):
-    queryset = ReferralLink.objects.all()
 
+    queryset = ReferralLink.objects.select_related("officer__user", "campaign")
+    http_method_names = ["get", "delete", "post"]
+    
     def get_serializer_class(self):
-        if self.action == "create":
+        if self.action == "create_link":
             return ReferralLinkCreateSerializer
         return ReferralLinkSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        officer_id = self.request.query_params.get("officer_id")
-        if officer_id:
-            queryset = queryset.filter(officer_id=officer_id)
-        return queryset
+    def create(self, request, *args, **kwargs):
+        return Response({"detail": "Direct create not allowed. Use /links/create-link/."},
+                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        return Response({"detail": "Update not allowed for referral links."},
+                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        return Response({"detail": "Partial update not allowed for referral links."},
+                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(detail=False, methods=["post"], url_path="gen-link")
+    def create_link(self, request):
+        serializer = ReferralLinkCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        officer = serializer.validated_data["officer"]
+        campaign = serializer.validated_data["campaign"]
+
+        ref_code = generate_referral_code(str(campaign.id), str(officer.id), settings.SECRET_KEY)
+        full_link = f"https://admissions.alxafrica.com/users/sign_up/track?refcode={ref_code}"
+
+        referral_link = ReferralLink.objects.create(
+            officer=officer,
+            campaign=campaign,
+            ref_code=ref_code,
+            full_link=full_link,
+            is_active=True,
+        )
+
+        return Response(ReferralLinkSerializer(referral_link).data, status=status.HTTP_201_CREATED)
 
 
 class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):

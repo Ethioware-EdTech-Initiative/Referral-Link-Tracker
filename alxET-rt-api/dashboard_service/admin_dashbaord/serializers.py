@@ -23,6 +23,8 @@ class CampaignSerializer(serializers.ModelSerializer):
     officer_count = serializers.IntegerField(
         source="officer_assignments.count", read_only=True
     )
+    
+    officers = serializers.SerializerMethodField()
 
     class Meta:
         model = Campaign
@@ -31,6 +33,7 @@ class CampaignSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "start_date",
+            "officers",
             "end_date",
             "is_active",
             "officer_count",
@@ -38,6 +41,10 @@ class CampaignSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at", "officer_count"]
+        
+    def get_officers(self, obj):
+        assignments = obj.officer_assignments.select_related("officer__user")
+        return OfficerSerializer([a.officer for a in assignments], many=True).data
 
 
 class CampaignCreateUpdateSerializer(serializers.ModelSerializer):
@@ -93,8 +100,8 @@ class ReferralLinkSerializer(serializers.ModelSerializer):
 class ReferralLinkCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReferralLink
-        fields = ["officer", "campaign", "full_link", "ref_code", "is_active", "revoke_at"]
-        read_only_fields = ["id", "click_count", "signup_count", "created_at", "updated_at"]
+        fields = ["officer", "campaign"]
+        read_only_fields = ["id", "click_count", "signup_count", "created_at", "full_link", "ref_code", "updated_at", "is_active", "revoke_at"]
 
 
 class DailyMetricsSerializer(serializers.ModelSerializer):
