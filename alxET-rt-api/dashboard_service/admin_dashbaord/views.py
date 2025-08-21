@@ -99,7 +99,7 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
         campaign = serializer.validated_data["campaign"]
 
         ref_code = generate_referral_code(str(campaign.id), str(officer.id), settings.SECRET_KEY)
-        full_link = f"https://admissions.alxafrica.com/users/sign_up/track?refcode={ref_code}"
+        full_link = f"https://referral-link-tracker.vercel.app/alxET-rt-api/tracking/referral/{ref_code}/"
 
         referral_link = ReferralLink.objects.create(
             officer=officer,
@@ -130,7 +130,6 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
         if action:
             queryset = queryset.filter(action__iexact=action)
         return queryset
-
 
 
 class StatsViewSet(viewsets.ViewSet):
