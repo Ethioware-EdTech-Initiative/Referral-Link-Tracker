@@ -13,11 +13,10 @@ from .tokens import create_jwt_pair_user
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
     def get_queryset(self):
         user = self.request.user
-        if user.is_active and user.is_staff:
-            return User.objects.all()
+        if user.is_active  and user.is_staff:
+            return User.objects.all().order_by('id')
         return User.objects.filter(id=user.id)
 
     def get_permissions(self):
