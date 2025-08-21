@@ -1,8 +1,8 @@
 from django.urls import path, include
 
-from .views import ClickEventViewSet, SignupEventViewSet
+from .views import ClickEventView, SignupEventView
 
 urlpatterns = [
-        path('/track-click', ClickEventViewSet.as_view(), basename ='track_click'),
-        path('track-signup', SignupEventViewSet.as_view(), basename = 'track_signup')
+        path('track_click/', ClickEventView.as_view(), name ='track_click'),
+        path('track_signup/', SignupEventView.as_view(), name = 'track_signup')
 ]
