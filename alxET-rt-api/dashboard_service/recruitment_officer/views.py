@@ -1,54 +1,27 @@
-# dashboard_services/recruitment_officer/views.py
-
-from django.db.models import Sum, Count
-from rest_framework import generics, views, response, permissions
+from django.db.models import Sum
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import permissions
 from ..models import ReferralLink, DailyMetrics, Campaign
-from .serializers import (
-    OfficerReferralLinkSerializer,
-    OfficerDailyMetricsSerializer,
-)
+from .serializers import OfficerReferralLinkSerializer, OfficerDailyMetricsSerializer
 
 
-class ReferralLinkListView(generics.ListAPIView):
+class ReferralLinkViewSet(viewsets.ReadOnlyModelViewSet):
+    
     serializer_class = OfficerReferralLinkSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return ReferralLink.objects.filter(officer=self.request.user.officer_profile)
 
 
-class ReferralLinkDetailView(generics.RetrieveAPIView):
-    serializer_class = OfficerReferralLinkSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    lookup_field = "id"
+class StatsViewSet(viewsets.ViewSet):
+    
+    # permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return ReferralLink.objects.filter(officer=self.request.user.officer_profile)
-
-
-class ReferralLinkRevokeView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def patch(self, request, id):
-        link = ReferralLink.objects.filter(
-            officer=request.user.officer_profile, id=id
-        ).first()
-        if not link:
-            return response.Response({"detail": "Not found."}, status=404)
-
-        link.is_active = False
-        link.save(update_fields=["is_active"])
-        return response.Response({
-            "id": str(link.id),
-            "is_active": link.is_active,
-            "revoke_at": link.revoke_at,
-        })
-
-
-class KPIView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
+    def list(self, request):
+        
         officer = request.user.officer_profile
         qs = DailyMetrics.objects.filter(officer=officer)
 
@@ -68,22 +41,23 @@ class KPIView(views.APIView):
             "active_links": active_links,
             "active_campaigns": active_campaigns,
         }
-        return response.Response(data)
+        return Response(data)
 
+    @action(detail=False, methods=["get"])
+    def timeline(self, request):
+        """
+        GET /stats/timeline/ → historical progress chart
+        """
+        officer = request.user.officer_profile
+        metrics = DailyMetrics.objects.filter(officer=officer).order_by("metric_date")
+        serializer = OfficerDailyMetricsSerializer(metrics, many=True)
+        return Response(serializer.data)
 
-class TimelineView(generics.ListAPIView):
-    serializer_class = OfficerDailyMetricsSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        officer = self.request.user.officer_profile
-        return DailyMetrics.objects.filter(officer=officer).order_by("metric_date")
-
-
-class CampaignBreakdownView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
+    @action(detail=False, methods=["get"])
+    def campaigns(self, request):
+        """
+        GET /stats/campaigns/ → per-campaign KPIs
+        """
         officer = request.user.officer_profile
         qs = (
             DailyMetrics.objects.filter(officer=officer)
@@ -110,4 +84,4 @@ class CampaignBreakdownView(views.APIView):
                 "end_date": row["campaign__end_date"],
             })
 
-        return response.Response(data)
+        return Response(data)

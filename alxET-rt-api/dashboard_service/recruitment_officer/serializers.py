@@ -1,5 +1,5 @@
 
-from admin_dashbaord.serializers import (
+from ..admin_dashbaord.serializers import (
     CampaignSerializer as AdminCampaignSerializer,
     OfficerCampaignAssignmentSerializer as AdminOfficerCampaignAssignmentSerializer,
     ReferralLinkSerializer as AdminReferralLinkSerializer,

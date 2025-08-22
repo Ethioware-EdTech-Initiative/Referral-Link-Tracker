@@ -1,9 +1,6 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from .views import (
-    ReferralLinkViewSet,
-    StatsViewSet,
-)
+from .views import ReferralLinkViewSet, StatsViewSet
 
 router = DefaultRouter()
 router.register(r"links", ReferralLinkViewSet, basename="officer-link")
