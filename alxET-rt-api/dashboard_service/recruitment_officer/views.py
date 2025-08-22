@@ -5,20 +5,24 @@ from rest_framework.response import Response
 from rest_framework import permissions
 from ..models import ReferralLink, DailyMetrics, Campaign
 from .serializers import OfficerReferralLinkSerializer, OfficerDailyMetricsSerializer
+from drf_spectacular.utils import extend_schema_view, extend_schema
 
-
+@extend_schema_view(
+    get=extend_schema(tags=["Officer-Dashboard"]),
+)
 class ReferralLinkViewSet(viewsets.ReadOnlyModelViewSet):
     
     serializer_class = OfficerReferralLinkSerializer
-    # permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return ReferralLink.objects.filter(officer=self.request.user.officer_profile)
 
 
+@extend_schema_view(
+    get=extend_schema(tags=["Officer-Dashboard"]),
+)
 class StatsViewSet(viewsets.ViewSet):
     
-    # permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request):
         
@@ -45,9 +49,6 @@ class StatsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"])
     def timeline(self, request):
-        """
-        GET /stats/timeline/ → historical progress chart
-        """
         officer = request.user.officer_profile
         metrics = DailyMetrics.objects.filter(officer=officer).order_by("metric_date")
         serializer = OfficerDailyMetricsSerializer(metrics, many=True)
@@ -55,9 +56,6 @@ class StatsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"])
     def campaigns(self, request):
-        """
-        GET /stats/campaigns/ → per-campaign KPIs
-        """
         officer = request.user.officer_profile
         qs = (
             DailyMetrics.objects.filter(officer=officer)
