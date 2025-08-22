@@ -4,7 +4,7 @@ from django.utils.timezone import now, timedelta
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
+from tracking_service.models import ClickEvent, SignupEvent
 from ..models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMetrics
 from auth_service.models import Officer, Audit_Log
 from .serializers import (
@@ -20,27 +20,14 @@ from .serializers import (
     AuditLogSerializer,
 )
 
-from ..utils import generate_referral_code
+from ..utils import generate_referral_code, get_geo_details
 from django.conf import settings
 
 
 class OfficerViewSet(viewsets.ModelViewSet):
-
     queryset = Officer.objects.select_related("user")
     serializer_class = OfficerSerializer
     http_method_names = ["get", "delete"]
-
-    def create(self, request, *args, **kwargs):
-        return Response({"detail": "Create not allowed for officers."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def update(self, request, *args, **kwargs):
-        return Response({"detail": "Update not allowed for officers."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def partial_update(self, request, *args, **kwargs):
-        return Response({"detail": "Partial update not allowed for officers."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class CampaignViewSet(viewsets.ModelViewSet):
@@ -78,18 +65,6 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
             return ReferralLinkCreateSerializer
         return ReferralLinkSerializer
 
-    def create(self, request, *args, **kwargs):
-        return Response({"detail": "Direct create not allowed. Use /links/create-link/."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def update(self, request, *args, **kwargs):
-        return Response({"detail": "Update not allowed for referral links."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def partial_update(self, request, *args, **kwargs):
-        return Response({"detail": "Partial update not allowed for referral links."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
     @action(detail=False, methods=["post"], url_path="gen-link")
     def create_link(self, request):
         serializer = ReferralLinkCreateSerializer(data=request.data)
@@ -100,6 +75,7 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
 
         ref_code = generate_referral_code(str(campaign.id), str(officer.id), settings.SECRET_KEY)
         full_link = f"https://referral-link-tracker.vercel.app/alxET-rt-api/v1/tracking/referral/{ref_code}/"
+        full_link = f"https://admissions.alxafrica.com/users/sign_up/track?refcode={ref_code}"
 
         referral_link = ReferralLink.objects.create(
             officer=officer,
@@ -145,22 +121,88 @@ class StatsViewSet(viewsets.ViewSet):
         })
 
     def _get_funnel(self):
-        
-        return []
+        total_clicks = DailyMetrics.objects.aggregate(total=Sum("total_clicks"))["total"] or 0
+        total_signups = DailyMetrics.objects.aggregate(total=Sum("total_signups"))["total"] or 0
+        conversion_rate = (total_signups / total_clicks * 100) if total_clicks > 0 else 0
+        return {
+            "total_clicks": total_clicks,
+            "total_signups": total_signups,
+            "conversion_rate": conversion_rate,
+        }
 
     def _get_leaderboard(self):
-        
-        return []
+        officers = (
+            DailyMetrics.objects
+            .values("officer_id", "officer__user__full_name")
+            .annotate(total_clicks=Sum("total_clicks"), total_signups=Sum("total_signups"))
+        )
+        results = []
+        for officer in officers:
+            clicks, signups = officer["total_clicks"] or 0, officer["total_signups"] or 0
+            rate = (signups / clicks * 100) if clicks > 0 else 0
+            score = signups + rate
+            results.append({
+                "officer_id": officer["officer_id"],
+                "officer_name": officer["officer__user__full_name"],
+                "total_clicks": clicks,
+                "total_signups": signups,
+                "conversion_rate": rate,
+                "conversion_score": score,
+            })
+        return sorted(results, key=lambda x: x["conversion_score"], reverse=True)
 
     def _get_campaigns(self):
-        
-        return []
+        campaigns = (
+            DailyMetrics.objects
+            .values("campaign_id", "campaign__name", "campaign__start_date", "campaign__end_date")
+            .annotate(total_clicks=Sum("total_clicks"), total_signups=Sum("total_signups"))
+        )
+        results = []
+        for c in campaigns:
+            clicks, signups = c["total_clicks"] or 0, c["total_signups"] or 0
+            rate = (signups / clicks * 100) if clicks > 0 else 0
+            duration_days = (c["campaign__end_date"] - c["campaign__start_date"]).days or 1
+            avg_signups = signups / duration_days
+            results.append({
+                "campaign_id": c["campaign_id"],
+                "campaign_name": c["campaign__name"],
+                "total_clicks": clicks,
+                "total_signups": signups,
+                "conversion_rate": rate,
+                "avg_signups_per_day": avg_signups,
+            })
+        return results
 
     def _get_trends(self):
-
-        return  []
+        range_days = 90
+        start_date = now().date() - timedelta(days=range_days)
+        metrics = (
+            DailyMetrics.objects
+            .filter(metric_date__gte=start_date)
+            .values("metric_date")
+            .annotate(total_clicks=Sum("total_clicks"), total_signups=Sum("total_signups"))
+            .order_by("metric_date")
+        )
+        results = []
+        for m in metrics:
+            clicks, signups = m["total_clicks"] or 0, m["total_signups"] or 0
+            rate = (signups / clicks * 100) if clicks > 0 else 0
+            results.append({
+                "date": m["metric_date"],
+                "total_clicks": clicks,
+                "total_signups": signups,
+                "conversion_rate": rate,
+            })
+        return results
 
     def _get_geo(self):
+        if not self.ip:
+            return {}
 
-        return []
+        geo_data = get_geo_details(self.ip)
+        self.geo_country = geo_data["country"]
+        self.geo_city = geo_data["city"]
+        self.geo_region = geo_data["region"]
+        self.save(update_fields=["geo_country", "geo_city", "geo_region"])
+        return geo_data
 
