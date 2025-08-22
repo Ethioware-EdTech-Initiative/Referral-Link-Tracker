@@ -229,18 +229,12 @@ SIMPLE_JWT = {
 
 
 REST_FRAMEWORK = {
-    # 'DEFAULT_AUTHENTICATION_CLASSES': [
-    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
-    # ],
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     # 'rest_framework.permissions.IsAuthenticated',
-        'rest_framework.permissions.AllowAny',
-    # ],
-    
-    # Disable global URL path versioning to avoid schema discovery issues.
-    # If you need versioning, prefer NamespaceVersioning or add explicit
-    # version segments (e.g., /v1/) to all API routes and the schema view.
-    # 'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+     'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     
     # for fut config
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
