@@ -5,11 +5,8 @@ from rest_framework.response import Response
 from rest_framework import permissions
 from ..models import ReferralLink, DailyMetrics, Campaign
 from .serializers import OfficerReferralLinkSerializer, OfficerDailyMetricsSerializer
-from drf_spectacular.utils import extend_schema_view, extend_schema
 
-@extend_schema_view(
-    get=extend_schema(tags=["Officer-Dashboard"]),
-)
+
 class ReferralLinkViewSet(viewsets.ReadOnlyModelViewSet):
     
     serializer_class = OfficerReferralLinkSerializer
@@ -18,9 +15,7 @@ class ReferralLinkViewSet(viewsets.ReadOnlyModelViewSet):
         return ReferralLink.objects.filter(officer=self.request.user.officer_profile)
 
 
-@extend_schema_view(
-    get=extend_schema(tags=["Officer-Dashboard"]),
-)
+
 class StatsViewSet(viewsets.ViewSet):
     
 

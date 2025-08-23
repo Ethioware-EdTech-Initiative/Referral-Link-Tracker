@@ -1,7 +1,5 @@
-
 from ..admin_dashbaord.serializers import (
     CampaignSerializer as AdminCampaignSerializer,
-    OfficerCampaignAssignmentSerializer as AdminOfficerCampaignAssignmentSerializer,
     ReferralLinkSerializer as AdminReferralLinkSerializer,
     DailyMetricsSerializer as AdminDailyMetricsSerializer,
 )
@@ -19,6 +17,7 @@ class OfficerReferralLinkSerializer(AdminReferralLinkSerializer):
             "created_at",
             "campaign",
         ]
+        read_only_fields = fields
 
 
 class OfficerCampaignSerializer(AdminCampaignSerializer):
@@ -30,6 +29,7 @@ class OfficerCampaignSerializer(AdminCampaignSerializer):
             "end_date",
             "is_active",
         ]
+        read_only_fields = fields
 
 
 class OfficerDailyMetricsSerializer(AdminDailyMetricsSerializer):
@@ -40,3 +40,4 @@ class OfficerDailyMetricsSerializer(AdminDailyMetricsSerializer):
             "total_signups",
             "click_to_signup_rate",
         ]
+        read_only_fields = fields
