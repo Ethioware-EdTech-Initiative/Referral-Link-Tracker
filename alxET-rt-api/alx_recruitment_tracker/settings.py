@@ -247,11 +247,11 @@ REST_FRAMEWORK = {
     ],
     
     'DEFAULT_THROTTLE_RATES': {
-        'user': '3/minute',
-        'anon': '3/minute',
-        'admin_moderate': '30/minute',
-        'admin_strict': '10/minute',
-        'officer_light': '60/minute',
+        'user': '2000/minute',           # original: '3/minute'
+        'anon': '2000/minute',           # original: '3/minute'
+        'admin_moderate': '2000/minute', # original: '30/minute'
+        'admin_strict': '2000/minute',   # original: '10/minute'
+        'officer_light': '2000/minute',  # original: '60/minute'
     },
     
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
