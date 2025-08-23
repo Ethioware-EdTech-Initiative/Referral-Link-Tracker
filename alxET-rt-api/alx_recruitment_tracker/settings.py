@@ -239,7 +239,7 @@ REST_FRAMEWORK = {
 
     # for fut config
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 20,
     
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.UserRateThrottle',
@@ -249,6 +249,9 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'user': '3/minute',
         'anon': '3/minute',
+        'admin_moderate': '30/minute',
+        'admin_strict': '10/minute',
+        'officer_light': '60/minute',
     },
     
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
