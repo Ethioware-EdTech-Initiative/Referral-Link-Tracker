@@ -33,6 +33,20 @@ class OfficerViewSet(viewsets.ModelViewSet):
     serializer_class = OfficerSerializer
     trottle_scope = "admin_moderate"
     http_method_names = ["get", "delete"]
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        response = super().destroy(request, *args, **kwargs)
+        Audit_Log.objects.create(
+            user=request.user,
+            action="delete",
+            target_type="Officer",
+            target_id=instance.id,
+            description=f"Deleted officer {instance.user.full_name}",
+            user_agent=request.META.get("HTTP_USER_AGENT", ""),
+            ip_address=request.META.get("REMOTE_ADDR", ""),
+        )
+        return response
 
 
 class CampaignViewSet(viewsets.ModelViewSet):
@@ -44,6 +58,44 @@ class CampaignViewSet(viewsets.ModelViewSet):
         if self.action in ["create", "update", "partial_update"]:
             return CampaignCreateUpdateSerializer
         return CampaignSerializer
+    
+    def perform_create(self, serializer):
+        campaign = serializer.save()
+        Audit_Log.objects.create(
+            user=self.request.user,
+            action="create",
+            target_type="Campaign",
+            target_id=campaign.id,
+            description=f"Created campaign {campaign.name}",
+            user_agent=self.request.META.get("HTTP_USER_AGENT", ""),
+            ip_address=self.request.META.get("REMOTE_ADDR", ""),
+        )
+
+    def perform_update(self, serializer):
+        campaign = serializer.save()
+        Audit_Log.objects.create(
+            user=self.request.user,
+            action="update",
+            target_type="Campaign",
+            target_id=campaign.id,
+            description=f"Updated campaign {campaign.name}",
+            user_agent=self.request.META.get("HTTP_USER_AGENT", ""),
+            ip_address=self.request.META.get("REMOTE_ADDR", ""),
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        response = super().destroy(request, *args, **kwargs)
+        Audit_Log.objects.create(
+            user=request.user,
+            action="delete",
+            target_type="Campaign",
+            target_id=instance.id,
+            description=f"Deleted campaign {instance.name}",
+            user_agent=request.META.get("HTTP_USER_AGENT", ""),
+            ip_address=request.META.get("REMOTE_ADDR", ""),
+        )
+        return response
 
 
 class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
@@ -63,6 +115,32 @@ class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
         if campaign_id:
             queryset = queryset.filter(campaign_id=campaign_id)
         return queryset
+    
+    def perform_create(self, serializer):
+        assignment = serializer.save()
+        Audit_Log.objects.create(
+            user=self.request.user,
+            action="create",
+            target_type="OfficerCampaignAssignment",
+            target_id=assignment.id,
+            description=f"Assigned officer {assignment.officer.user.full_name} to campaign {assignment.campaign.name}",
+            user_agent=self.request.META.get("HTTP_USER_AGENT", ""),
+            ip_address=self.request.META.get("REMOTE_ADDR", ""),
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        response = super().destroy(request, *args, **kwargs)
+        Audit_Log.objects.create(
+            user=request.user,
+            action="delete",
+            target_type="OfficerCampaignAssignment",
+            target_id=instance.id,
+            description=f"Removed officer {instance.officer.user.full_name} from campaign {instance.campaign.name}",
+            user_agent=request.META.get("HTTP_USER_AGENT", ""),
+            ip_address=self.request.META.get("REMOTE_ADDR", ""),
+        )
+        return response
 
 
 class ReferralLinkViewSet(viewsets.ModelViewSet):
@@ -109,22 +187,6 @@ class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-
-class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Audit_Log.objects.all().order_by('-timestamp')
-    permission_classes = [IsAdminUser]
-    trottle_scope = "admin_strict"
-    serializer_class = AuditLogSerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user_id = self.request.query_params.get("user_id")
-        action = self.request.query_params.get("action")
-        if user_id:
-            queryset = queryset.filter(user_id=user_id)
-        if action:
-            queryset = queryset.filter(action__iexact=action)
-        return queryset
 
 
 class StatsViewSet(viewsets.ViewSet):
