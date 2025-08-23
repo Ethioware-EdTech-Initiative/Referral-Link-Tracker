@@ -22,16 +22,23 @@ from .serializers import (
 
 from ..utils import generate_referral_code
 from django.conf import settings
+from rest_framework.permissions import IsAdminUser
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 
 class OfficerViewSet(viewsets.ModelViewSet):
     queryset = Officer.objects.select_related("user")
+    permission_classes = [IsAdminUser]
     serializer_class = OfficerSerializer
+    trottle_scope = "admin_moderate"
     http_method_names = ["get", "delete"]
 
 
 class CampaignViewSet(viewsets.ModelViewSet):
-    queryset = Campaign.objects.all()
+    queryset = Campaign.objects.all().order_by('-created_at')
+    permission_classes = [IsAdminUser]
+    trottle_scope = "admin_moderate"
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
@@ -41,6 +48,9 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
 class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
     queryset = OfficerCampaignAssignment.objects.all()
+    permission_classes = [IsAdminUser]
+
+    trottle_scope = "admin_moderate"
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -57,7 +67,9 @@ class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
 
 class ReferralLinkViewSet(viewsets.ModelViewSet):
 
-    queryset = ReferralLink.objects.select_related("officer__user", "campaign")
+    queryset = ReferralLink.objects.select_related("officer__user", "campaign").order_by('-created_at')
+    permission_classes = [IsAdminUser]
+    trottle_scope = "admin_strict"
     http_method_names = ["get", "delete", "post"]
     
     def get_serializer_class(self):
@@ -86,14 +98,21 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
 
         return Response(ReferralLinkSerializer(referral_link).data, status=status.HTTP_201_CREATED)
 
-
 class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = DailyMetrics.objects.all()
+    queryset = DailyMetrics.objects.all().order_by('-metric_date')
     serializer_class = DailyMetricsSerializer
+    permission_classes = [IsAdminUser]
+    throttle_scope = "admin_moderate"
+
+    @method_decorator(cache_page(60))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Audit_Log.objects.all()
+    queryset = Audit_Log.objects.all().order_by('-timestamp')
+    permission_classes = [IsAdminUser]
+    trottle_scope = "admin_strict"
     serializer_class = AuditLogSerializer
 
     def get_queryset(self):
@@ -108,9 +127,12 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class StatsViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny] # Add appropriate authentication classes
+    permission_classes = [IsAdminUser]
+    trottle_scope = "admin_moderate"
+    pagination_class = None
+    
+    @method_decorator(cache_page(60))
     def list(self, request):
-
         return Response({
             "funnel": self._get_funnel(),
             "leaderboard": self._get_leaderboard(),
