@@ -5,10 +5,13 @@ from rest_framework.response import Response
 from rest_framework import permissions
 from ..models import ReferralLink, DailyMetrics, Campaign
 from .serializers import OfficerReferralLinkSerializer, OfficerDailyMetricsSerializer
-
+from rest_framework.permissions import IsAuthenticated
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 class ReferralLinkViewSet(viewsets.ReadOnlyModelViewSet):
-    
+    trottle_scope = "officer_light"
+    permission_classes = [IsAuthenticated]
     serializer_class = OfficerReferralLinkSerializer
 
     def get_queryset(self):
@@ -17,10 +20,11 @@ class ReferralLinkViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class StatsViewSet(viewsets.ViewSet):
+    trottle_scope = "officer_light"
+    permission_classes = [IsAuthenticated]
     
-
+    @method_decorator(cache_page(60))
     def list(self, request):
-        
         officer = request.user.officer_profile
         qs = DailyMetrics.objects.filter(officer=officer)
 
