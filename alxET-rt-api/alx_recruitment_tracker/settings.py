@@ -226,18 +226,19 @@ SIMPLE_JWT = {
 
 
 REST_FRAMEWORK = {
-    # 'DEFAULT_AUTHENTICATION_CLASSES': [
-    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
-    # ],
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     'rest_framework.permissions.IsAuthenticated',
-    # ],
     
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.AllowAny',
+    ],
     
     # for fut config
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 20,
     
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.UserRateThrottle',
@@ -245,8 +246,11 @@ REST_FRAMEWORK = {
     ],
     
     'DEFAULT_THROTTLE_RATES': {
-        'user': '3/minute',
-        'anon': '3/minute',
+        'user': '2000/minute',           # original: '3/minute'
+        'anon': '2000/minute',           # original: '3/minute'
+        'admin_moderate': '2000/minute', # original: '30/minute'
+        'admin_strict': '2000/minute',   # original: '10/minute'
+        'officer_light': '2000/minute',  # original: '60/minute'
     },
     
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',

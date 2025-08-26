@@ -15,6 +15,15 @@ class Campaign(models.Model):
     def __str__(self):
         return self.name
     
+    def save(self, *args, **kwargs):
+        if self.end_date < now():
+            self.is_active = False
+        super().save(*args, **kwargs)
+
+    @property
+    def is_currently_active(self):
+        return self.is_active and self.end_date >= now()
+    
 class OfficerCampaignAssignment(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     officer = models.ForeignKey('auth_service.Officer', on_delete=models.CASCADE, related_name='campaign_assignments')

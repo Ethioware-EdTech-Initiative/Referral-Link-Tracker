@@ -25,7 +25,7 @@ urlpatterns = [
     path('alxET-rt-api/v1/tracking/', include('tracking_service.urls')),
     path('alxET-rt-api/v1/dashboard/', include('dashboard_service.admin_dashbaord.urls')),
     # path('alxET-rt-api/v1/data-sync/', include('data_sync_worker.urls')),
-    
+    path('alxET-rt-api/v1/dashboard/', include('dashboard_service.recruitment_officer.urls')),
     # path("alxET-rt-api/v1/dashboard/admin-dash/", include("dashboard_service.admin_dashbaord.urls")),
 
     
