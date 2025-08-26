@@ -21,17 +21,15 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('alxET-rt-api/auth/', include('auth_service.urls')),
-    path('alxET-rt-api/tracking/', include('tracking_service.urls')),
-    path('alxET-rt-api/dashboard/', include('dashboard_service.admin_dashbaord.urls')),
-    path('alxET-rt-api/dashboard/', include('dashboard_service.recruitment_officer.urls')),
-    
-    # path('alxET-rt-api/data-sync/', include('data_sync_worker.urls')),
-    
-    # path("alxET-rt-api/dashboard/admin-dash/", include("dashboard_service.admin_dashbaord.urls")),
+    path('alxET-rt-api/v1/auth/', include('auth_service.urls')),
+    path('alxET-rt-api/v1/tracking/', include('tracking_service.urls')),
+    path('alxET-rt-api/v1/dashboard/', include('dashboard_service.admin_dashbaord.urls')),
+    # path('alxET-rt-api/v1/data-sync/', include('data_sync_worker.urls')),
+    path('alxET-rt-api/v1/dashboard/', include('dashboard_service.recruitment_officer.urls')),
+    # path("alxET-rt-api/v1/dashboard/admin-dash/", include("dashboard_service.admin_dashbaord.urls")),
 
     
-    path('alxET-rt-api/doc/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('alxET-rt-api/doc/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('alxET-rt-api/doc/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('alxET-rt-api/v1/doc/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('alxET-rt-api/v1/doc/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('alxET-rt-api/v1/doc/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]

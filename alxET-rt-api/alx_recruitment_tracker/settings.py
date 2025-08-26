@@ -53,20 +53,16 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Application definition
-
-INSTALLED_APPS = [
+DJANGO_APPS =[
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    'auth_service',
-    'dashboard_service',
-    'data_sync_worker',
-    'tracking_service',
-    
+]
+
+THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -75,6 +71,16 @@ INSTALLED_APPS = [
     'django_redis',
     'whitenoise.runserver_nostatic',
 ]
+
+CUSTOM_APPS = [
+    'auth_service',
+    'dashboard_service',
+    'data_sync_worker',
+    'tracking_service',
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -220,6 +226,8 @@ SIMPLE_JWT = {
 
 
 REST_FRAMEWORK = {
+    
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
