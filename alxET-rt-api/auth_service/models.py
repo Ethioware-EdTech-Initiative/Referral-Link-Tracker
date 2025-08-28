@@ -45,7 +45,7 @@ class Officer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='officer_profile')
 
     def __str__(self):
-        return f" Officer Name {self.user.full_name}"
+        return f" Officer {self.user.full_name}"
 
 class Audit_Log(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
