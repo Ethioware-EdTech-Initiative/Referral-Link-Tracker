@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404, redirect
 from .serializers import SignupEventSerializer, ClickEventSerializer
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
+from rest_framework import serializers
 from dashboard_service.models import ReferralLink
 from dashboard_service.models import ReferralLink
 from .models import ClickEvent
@@ -33,6 +35,13 @@ class TrackClickView(APIView):
     """
     Handles referral link clicks also device tracking...
     """
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name="ref_code", location=OpenApiParameter.PATH, type=str),
+            OpenApiParameter(name="debug", location=OpenApiParameter.QUERY, required=False, type=str),
+        ],
+        responses={201: ClickEventSerializer},
+    )
     def get(self, request, ref_code, *args, **kwargs):
         referral_link = get_object_or_404(ReferralLink, ref_code=ref_code)
         ip = get_client_ip(request)
@@ -58,6 +67,17 @@ class SignupEventView(APIView):
     Tracks a signup event after a candidate has clicked a referral link.
     """
 
+    @extend_schema(
+        request=inline_serializer(
+            name="SignupEventRequest",
+            fields={
+                "refcode": serializers.CharField(),
+                "click_event_id": serializers.IntegerField(),
+                "fraud_score": serializers.FloatField(required=False),
+            },
+        ),
+        responses={201: SignupEventSerializer},
+    )
     def post(self, request, *args, **kwargs):
         ref_code = request.data.get('refcode')
         click_event_id = request.data.get('click_event_id')
