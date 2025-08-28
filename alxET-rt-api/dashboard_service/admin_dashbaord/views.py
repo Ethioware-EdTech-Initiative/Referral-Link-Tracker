@@ -291,6 +291,7 @@ class StatsViewSet(viewsets.ViewSet):
             .order_by("-total_clicks")
         )
 
+
         region_data = (
             ClickEvent.objects
             .values("geo_country", "geo_region")
