@@ -30,6 +30,6 @@ urlpatterns = [
 
     
     path('alxET-rt-api/v1/doc/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('alxET-rt-api/v1/doc/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('alxET-rt-api/doc/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('alxET-rt-api/v1/doc/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
