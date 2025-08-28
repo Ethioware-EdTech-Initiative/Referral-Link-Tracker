@@ -2,18 +2,8 @@ import os
 import json
 from datetime import datetime, timedelta
 
-# Configure Celery app for this module
-from celery import Celery
-
-app = Celery('data_sync_worker')
-app.conf.update(
-    broker_url=os.getenv("REDIS_URL"),
-    result_backend=os.getenv("REDIS_URL"),
-    accept_content=['json'],
-    task_serializer='json',
-    result_serializer='json',
-    timezone='UTC',
-)
+# Import the configured Celery app from celery.py
+from .celery import app
 
 @app.task(bind=True)
 def debug_task(self):
