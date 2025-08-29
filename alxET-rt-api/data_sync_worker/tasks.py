@@ -43,6 +43,14 @@ def export_raw_data():
         sheet = gc.open_by_key(sheet_id)
         worksheet = sheet.worksheet("Tracker_Raw_Data")
 
+        # Clear existing data and add headers
+        worksheet.clear()
+        headers = [
+            "Timestamp", "EventType", "ReferralLinkID", "OfficerID", 
+            "CampaignID", "CampaignName", "UserEmailHash", "IP", "UserAgent"
+        ]
+        worksheet.append_row(headers)
+
         # Get events from the last hour (for real-time append)
         one_hour_ago = timezone.now() - timedelta(hours=1)
 
@@ -79,7 +87,7 @@ def export_raw_data():
                 str(event.referral_link.officer.id),
                 str(event.referral_link.campaign.id),
                 event.referral_link.campaign.name,
-                event.email_hash or '',
+                '', 
                 event.click_event.ip if event.click_event else '',
                 event.click_event.user_agent if event.click_event else ''
             ])
