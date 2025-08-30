@@ -147,7 +147,10 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'ALX Recruitment Tracker API',
     'DESCRIPTION': 'API for managing recruitment campaigns, referral links, and tracking events.',
     'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_INCLUDE_SCHEMA': True,
+    # Ensure schema endpoint is publicly accessible & not throttled
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_THROTTLE_CLASSES': [],
 }
 
 # Password validation
@@ -227,7 +230,7 @@ SIMPLE_JWT = {
 
 REST_FRAMEWORK = {
     
-    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
@@ -235,7 +238,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
         # 'rest_framework.permissions.AllowAny',
     ],
-    
+
     # for fut config
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
