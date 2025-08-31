@@ -143,6 +143,7 @@ CACHES = {
     }
 }
 
+CELERY_FLOWER_PORT = 5555
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'ALX Recruitment Tracker API',
