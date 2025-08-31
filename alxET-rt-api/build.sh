@@ -16,10 +16,3 @@ python3 manage.py collectstatic --no-input
 # Run migrations
 echo "Running migrations..."
 python3 manage.py migrate --no-input
-
-# Start Gunicorn server
-echo "Starting Gunicorn..."
-gunicorn alx_recruitment_tracker.wsgi:application \
-    --bind 0.0.0.0:$PORT \
-    --workers 3 \
-    --timeout 120
