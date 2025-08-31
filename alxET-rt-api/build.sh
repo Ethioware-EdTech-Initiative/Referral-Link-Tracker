@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -o errexit
+set -o errexit  # Exit on error
+
 echo "Starting deployment..."
 
 # Upgrade pip
@@ -7,6 +8,7 @@ python3 -m pip install --upgrade pip
 
 # Install dependencies
 pip3 install -r requirements.txt
+
 
 # Collect static files
 echo "Collecting static files..."
