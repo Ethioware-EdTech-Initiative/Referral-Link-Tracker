@@ -13,13 +13,13 @@ pip3 install -r requirements.txt
 echo "Collecting static files..."
 python3 manage.py collectstatic --no-input
 
-# Run database migrations
+# Run migrations
 echo "Running migrations..."
 python3 manage.py migrate --no-input
 
 # Start Gunicorn server
 echo "Starting Gunicorn..."
-gunicorn aau_internB.wsgi:application \
+gunicorn alx_recruitment_tracker.wsgi:application \
     --bind 0.0.0.0:$PORT \
     --workers 3 \
     --timeout 120
