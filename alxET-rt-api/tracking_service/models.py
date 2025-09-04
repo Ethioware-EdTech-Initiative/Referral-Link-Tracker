@@ -12,8 +12,6 @@ class ClickEvent(models.Model):
     geo_city = models.CharField(max_length=64, null=True, blank=True)
     geo_region = models.CharField(max_length=64, null=True, blank=True)
     fraud_score = models.FloatField(default=0.0)
-    
-
     def __str__(self):
         return f"ClickEvent {self.id}"
     
