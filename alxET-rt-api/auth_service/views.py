@@ -7,7 +7,6 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiResponse
 from rest_framework import serializers
-
 from .serializers import UserSerializer, LoginSerializer, ChangePasswordSerializer
 from .models import User, Officer
 from .tokens import create_jwt_pair_user
@@ -25,6 +24,13 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return [permissions.AllowAny()]
         return super().get_permissions()
+
+class MeviewSet(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class LoginRateThrottle(AnonRateThrottle):
     rate = '5/min'
@@ -89,7 +95,6 @@ class LogOutView(APIView):
         
         
 class ChangePasswordView(APIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
     
     def post(self, request):

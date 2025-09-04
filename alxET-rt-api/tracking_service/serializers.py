@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ClickEvent, SignupEvent
+from .models import ClickEvent, SignupEvent, FraudFindings
 
 class ClickEventSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,7 +19,6 @@ class ClickEventSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'fraud_score', 'timestamp']
 
         
-        
 class SignupEventSerializer(serializers.ModelSerializer):
     class Meta:
         model = SignupEvent
@@ -32,3 +31,9 @@ class SignupEventSerializer(serializers.ModelSerializer):
             'timestamp'
         ]
         read_only_fields = ['id', 'conversion_minutes', 'timestamp']
+        
+
+class FraudFindingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FraudFindings
+        fields= '__all__'
