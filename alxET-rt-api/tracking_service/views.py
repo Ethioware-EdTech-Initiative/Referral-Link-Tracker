@@ -4,12 +4,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404, redirect
-from .serializers import SignupEventSerializer, ClickEventSerializer
+from .serializers import SignupEventSerializer, ClickEventSerializer, FraudFindingsSerializer
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
 from rest_framework import serializers
 from dashboard_service.models import ReferralLink
-from dashboard_service.models import ReferralLink
-from .models import ClickEvent
+from .models import ClickEvent, FraudFindings, SignupEvent
+from .utils import fraud_score_for_click_event, fraud_score_for_signup_event
+from rest_framework.generics import ListAPIView
 
 SIGNUP_URL = "https://admissions.alxafrica.com/users/sign_up/"
 
@@ -46,16 +47,29 @@ class TrackClickView(APIView):
         referral_link = get_object_or_404(ReferralLink, ref_code=ref_code)
         ip = get_client_ip(request)
         country, city, region = get_geolocation(ip)
+        user_agent =request.META.get('HTTP_USER_AGENT', '')
+        
+        fraud_score = fraud_score_for_click_event(ip, user_agent, referral_link)
+
         click = ClickEvent.objects.create(
             referral_link=referral_link,
             ip=ip,
-            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            user_agent=user_agent,
             geo_country=country,
             geo_city=city,
             geo_region=region,
+            fraud_score = fraud_score
         )
         referral_link.click_count += 1
         referral_link.save(update_fields=['click_count'])
+        
+        if fraud_score > 7:
+            FraudFindings.objects.create(
+                event_type='click',
+                event_id=click.id,
+                fraud_score=fraud_score,
+                findings_details="High fraud score on click event."
+            )
 
         if request.GET.get("debug") == "true":
             return Response(ClickEventSerializer(click).data, status=status.HTTP_201_CREATED)
@@ -93,17 +107,26 @@ class SignupEventView(APIView):
             conversion_minutes = None
             if click_event.timestamp:
                 conversion_minutes = int((now() - click_event.timestamp).total_seconds() / 60)
+            
+            fraud_score = fraud_score_for_signup_event(click_event, conversion_minutes)
 
             data = {
                 "referral_link": referral_link.id,
                 "click_event": click_event.id,
                 "conversion_minutes": conversion_minutes,
-                "fraud_score": request.data.get('fraud_score', 0.0),
+                "fraud_score": fraud_score,
             }
 
             serializer = SignupEventSerializer(data=data)
             if serializer.is_valid():
-                serializer.save()
+                signup_event= serializer.save()
+                if fraud_score > 7:
+                    FraudFindings.objects.create(
+                        event_type='signup',
+                        event_id=signup_event.id,
+                        fraud_score=fraud_score,
+                        findings_details="High fraud score on signup event."
+                    )
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -113,3 +136,15 @@ class SignupEventView(APIView):
         except ClickEvent.DoesNotExist:
             return Response({"error": "ClickEvent does not exist for this refcode"},
                             status=status.HTTP_400_BAD_REQUEST)
+            
+class FraudFindingsListView(ListAPIView):
+    queryset = FraudFindings.objects.all().order_by('-id')
+    serializer_class = FraudFindingsSerializer
+
+class ClickEventListView(ListAPIView):
+    queryset = ClickEvent.objects.all().order_by('-id')
+    serializer_class = ClickEventSerializer
+    
+class SignupEventListView(ListAPIView):
+    queryset = SignupEvent.objects.all().order_by('-id')
+    serializer_class = SignupEventSerializer
