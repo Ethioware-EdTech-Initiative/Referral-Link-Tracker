@@ -25,3 +25,4 @@ flower
 # coverage 
 # pytest-cov 
 # pytest-html
+# locust
