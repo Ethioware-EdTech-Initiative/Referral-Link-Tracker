@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 from auth_service.models import Officer
+from django.utils import timezone
 
 class Campaign(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
@@ -14,6 +15,15 @@ class Campaign(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if self.end_date < timezone.now():
+            self.is_active = False
+        super().save(*args, **kwargs)
+
+    @property
+    def is_currently_active(self):
+        return self.is_active and self.end_date >= timezone.now()
     
 class OfficerCampaignAssignment(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)

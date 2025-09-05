@@ -53,20 +53,16 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Application definition
-
-INSTALLED_APPS = [
+DJANGO_APPS =[
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    'auth_service',
-    'dashboard_service',
-    'data_sync_worker',
-    'tracking_service',
-    
+]
+
+THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -76,7 +72,18 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
 ]
 
+CUSTOM_APPS = [
+    'auth_service',
+    'dashboard_service',
+    'data_sync_worker',
+    'tracking_service',
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
+
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -136,12 +143,16 @@ CACHES = {
     }
 }
 
+CELERY_FLOWER_PORT = 5555
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'ALX Recruitment Tracker API',
     'DESCRIPTION': 'API for managing recruitment campaigns, referral links, and tracking events.',
     'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_INCLUDE_SCHEMA': True,
+    # Ensure schema endpoint is publicly accessible & not throttled
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_THROTTLE_CLASSES': [],
 }
 
 # Password validation
@@ -224,10 +235,10 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-        # 'rest_framework.permissions.AllowAny',
+        # 'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
-    
+
     # for fut config
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
@@ -238,11 +249,11 @@ REST_FRAMEWORK = {
     ],
     
     'DEFAULT_THROTTLE_RATES': {
-        'user': '3/minute',
-        'anon': '3/minute',
-        'admin_moderate': '30/minute',
-        'admin_strict': '10/minute',
-        'officer_light': '60/minute',
+        'user': '2000/minute',           # original: '3/minute'
+        'anon': '2000/minute',           # original: '3/minute'
+        'admin_moderate': '2000/minute', # original: '30/minute'
+        'admin_strict': '2000/minute',   # original: '10/minute'
+        'officer_light': '2000/minute',  # original: '60/minute'
     },
     
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',

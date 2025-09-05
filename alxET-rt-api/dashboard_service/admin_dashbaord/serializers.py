@@ -101,7 +101,7 @@ class OfficerCampaignAssignmentCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         officer = data["officer"]
         campaign = data["campaign"]
-        if not officer.is_active:
+        if not officer.user.is_active:
             raise serializers.ValidationError({"officer": "Officer must be active."})
         if not campaign.is_active:
             raise serializers.ValidationError({"campaign": "Campaign must be active."})
@@ -157,13 +157,22 @@ class ReferralLinkCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        officer, campaign = data["officer"], data["campaign"]
-        if not officer.is_active:
+        officer = data["officer"]
+        campaign = data["campaign"]
+
+        if not officer.user.is_active:
             raise serializers.ValidationError({"officer": "Officer must be active."})
+
         if not campaign.is_active:
             raise serializers.ValidationError({"campaign": "Campaign must be active."})
-        if not OfficerCampaignAssignment.objects.filter(officer=officer, campaign=campaign,).exists():
-            raise serializers.ValidationError("Officer is not assigned to this campaign.")
+
+        if not OfficerCampaignAssignment.objects.filter(
+            officer=officer, campaign=campaign
+        ).exists():
+            raise serializers.ValidationError(
+                {"assignment": "Officer is not assigned to this campaign."}
+            )
+
         return data
 
 

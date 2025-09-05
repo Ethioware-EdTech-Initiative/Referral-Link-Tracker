@@ -29,7 +29,7 @@ from django.views.decorators.cache import cache_page
 
 class OfficerViewSet(viewsets.ModelViewSet):
     queryset = Officer.objects.select_related("user")
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
     serializer_class = OfficerSerializer
     trottle_scope = "admin_moderate"
     http_method_names = ["get", "delete"]
@@ -100,7 +100,7 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
 class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
     queryset = OfficerCampaignAssignment.objects.all()
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
 
     trottle_scope = "admin_moderate"
 
@@ -146,7 +146,7 @@ class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
 class ReferralLinkViewSet(viewsets.ModelViewSet):
 
     queryset = ReferralLink.objects.select_related("officer__user", "campaign").order_by('-created_at')
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
     trottle_scope = "admin_strict"
     http_method_names = ["get", "delete", "post"]
     
@@ -164,8 +164,7 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
         campaign = serializer.validated_data["campaign"]
 
         ref_code = generate_referral_code(str(campaign.id), str(officer.id), settings.SECRET_KEY)
-        full_link = f"https://admissions.alxafrica.com/users/sign_up/track?refcode={ref_code}"
-
+        full_link = f"https://referral-link-tracker.vercel.app/alxET-rt-api/tracking/referral/{ref_code}/"
         referral_link = ReferralLink.objects.create(
             officer=officer,
             campaign=campaign,
@@ -185,7 +184,6 @@ class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):
     @method_decorator(cache_page(60))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-
 
 
 class StatsViewSet(viewsets.ViewSet):
@@ -291,6 +289,7 @@ class StatsViewSet(viewsets.ViewSet):
             )
             .order_by("-total_clicks")
         )
+
 
         region_data = (
             ClickEvent.objects

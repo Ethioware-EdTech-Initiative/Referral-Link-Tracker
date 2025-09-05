@@ -1,21 +1,18 @@
 #!/usr/bin/env bash
+
+
 set -o errexit  # Exit on error
 
+# Log the deployment start
 echo "Starting deployment..."
 
 # Upgrade pip
 python3 -m pip install --upgrade pip
 
-# Install dependencies
+# Install required dependencies from requirements.txt
 pip3 install -r requirements.txt
 
-
-# Collect static files
-echo "Collecting static files..."
-python3 manage.py collectstatic --no-input
-
-# Run migrations
-echo "Running migrations..."
+# Run database migrations (important step for Django setup)
 python3 manage.py migrate --no-input
 
 # Start Gunicorn server
