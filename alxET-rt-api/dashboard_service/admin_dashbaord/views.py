@@ -22,7 +22,7 @@ from .serializers import (
 
 from ..utils import generate_referral_code
 from django.conf import settings
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, AllowAny
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
@@ -51,7 +51,8 @@ class OfficerViewSet(viewsets.ModelViewSet):
 
 class CampaignViewSet(viewsets.ModelViewSet):
     queryset = Campaign.objects.all().order_by('-created_at')
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     trottle_scope = "admin_moderate"
 
     def get_serializer_class(self):
@@ -147,6 +148,7 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
 
     queryset = ReferralLink.objects.select_related("officer__user", "campaign").order_by('-created_at')
     # permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     trottle_scope = "admin_strict"
     http_method_names = ["get", "delete", "post"]
     
@@ -178,7 +180,8 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
 class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DailyMetrics.objects.all().order_by('-metric_date')
     serializer_class = DailyMetricsSerializer
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     throttle_scope = "admin_moderate"
 
     @method_decorator(cache_page(60))
@@ -187,7 +190,8 @@ class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class StatsViewSet(viewsets.ViewSet):
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     trottle_scope = "admin_moderate"
     pagination_class = None
     
