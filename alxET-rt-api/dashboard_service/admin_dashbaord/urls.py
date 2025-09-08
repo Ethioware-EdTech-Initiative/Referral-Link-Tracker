@@ -17,6 +17,10 @@ router.register(r"links", ReferralLinkViewSet, basename="referral-link")
 router.register(r"metrics", DailyMetricsViewSet, basename="metrics")
 router.register(r"stats", StatsViewSet, basename="stats")
 
+router.register(r"assignments", OfficerCampaignAssignmentViewSet, basename="officercampaignassignment")
+router.register(r"metrics", DailyMetricsViewSet, basename="dailymetrics")
+
+
 urlpatterns = [
     path("admin-dash/", include(router.urls)),
 ]

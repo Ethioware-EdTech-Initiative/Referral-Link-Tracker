@@ -28,7 +28,7 @@ from django.views.decorators.cache import cache_page
 
 
 class OfficerViewSet(viewsets.ModelViewSet):
-    queryset = Officer.objects.select_related("user")
+    queryset = Officer.objects.select_related("user").order_by("id") 
     # permission_classes = [IsAdminUser]
     serializer_class = OfficerSerializer
     trottle_scope = "admin_moderate"
@@ -99,7 +99,7 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
 
 class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
-    queryset = OfficerCampaignAssignment.objects.all()
+    queryset = OfficerCampaignAssignment.objects.all().order_by("id")
     # permission_classes = [IsAdminUser]
 
     trottle_scope = "admin_moderate"

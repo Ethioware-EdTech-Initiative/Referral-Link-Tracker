@@ -1,10 +1,14 @@
 import pytest
 import factory
-import pytest_factoryboy
 from django.utils import timezone
 from auth_service.models import User, Officer
 from ..models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMetrics
+import pytest_factoryboy
+from rest_framework.test import APIClient
 
+@pytest.fixture
+def api_client():
+    return APIClient()
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -13,6 +17,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = factory.Sequence(lambda n: f"user{n}@test.com")
     full_name = factory.Sequence(lambda n: f"Test User {n}")
     is_active = True
+    is_staff = False
 
 
 class OfficerFactory(factory.django.DjangoModelFactory):
@@ -29,6 +34,7 @@ class CampaignFactory(factory.django.DjangoModelFactory):
     name = factory.Sequence(lambda n: f"Campaign {n}")
     start_date = factory.LazyFunction(timezone.now)
     end_date = factory.LazyFunction(lambda: timezone.now() + timezone.timedelta(days=10))
+    is_active = True
 
 
 class OfficerCampaignAssignmentFactory(factory.django.DjangoModelFactory):
@@ -47,6 +53,7 @@ class ReferralLinkFactory(factory.django.DjangoModelFactory):
     campaign = factory.SubFactory(CampaignFactory)
     full_link = factory.Sequence(lambda n: f"https://ref.test/{n}")
     ref_code = factory.Sequence(lambda n: f"code{n}")
+    is_active = True
 
 
 class DailyMetricsFactory(factory.django.DjangoModelFactory):
@@ -61,7 +68,7 @@ class DailyMetricsFactory(factory.django.DjangoModelFactory):
     total_signups = 5
 
 
-# ✅ Correct way: do NOT overwrite pytest_factoryboy
+
 pytest_factoryboy.register(UserFactory)
 pytest_factoryboy.register(OfficerFactory)
 pytest_factoryboy.register(CampaignFactory)
