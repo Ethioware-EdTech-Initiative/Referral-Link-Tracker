@@ -1,7 +1,7 @@
 from locust import HttpUser, TaskSet, task, between
 import threading
 
-CAMPAIGN_ID = "340a0007-9374-4a8c-a400-12336f27868d"
+CAMPAIGN_ID = "bd84c619-5c61-4348-b5e3-9ae4cd60f05e"
 OFFICER_ID = "9296a485-08f8-4f56-b81d-5b1fd0722e4e"
 
 
