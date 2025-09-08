@@ -18,7 +18,6 @@ class ReferralLinkViewSet(viewsets.ReadOnlyModelViewSet):
         return ReferralLink.objects.filter(officer=self.request.user.officer_profile)
 
 
-
 class StatsViewSet(viewsets.ViewSet):
     trottle_scope = "officer_light"
     permission_classes = [IsAuthenticated]
