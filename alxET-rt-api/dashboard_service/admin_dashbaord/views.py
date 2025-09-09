@@ -165,15 +165,29 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
         officer = serializer.validated_data["officer"]
         campaign = serializer.validated_data["campaign"]
 
-        ref_code = generate_referral_code(str(campaign.id), str(officer.id), settings.SECRET_KEY)
-        full_link = f"https://referral-link-tracker.vercel.app/alxET-rt-api/tracking/referral/{ref_code}/"
-        referral_link = ReferralLink.objects.create(
-            officer=officer,
-            campaign=campaign,
-            ref_code=ref_code,
-            full_link=full_link,
-            is_active=True,
-        )
+        max_attempts = 5
+        referral_link = None
+
+        for _ in range(max_attempts):
+            ref_code = generate_referral_code(str(campaign.id), str(officer.id), settings.SECRET_KEY, length=32)
+            full_link = f"https://referral-link-tracker.vercel.app/alxET-rt-api/tracking/referral/{ref_code}/"
+            try:
+                referral_link = ReferralLink.objects.create(
+                    officer=officer,
+                    campaign=campaign,
+                    ref_code=ref_code,
+                    full_link=full_link,
+                    is_active=True,
+                )
+                break  # success
+            except IntegrityError:
+                continue  # retry with a fresh code
+
+        if referral_link is None:
+            return Response(
+                {"detail": "Failed to generate unique referral link after multiple attempts."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response(ReferralLinkSerializer(referral_link).data, status=status.HTTP_201_CREATED)
 
