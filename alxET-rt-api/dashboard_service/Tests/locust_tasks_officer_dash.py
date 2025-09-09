@@ -1,7 +1,7 @@
 from locust import HttpUser, TaskSet, task, between
 import threading
 
-# Shared token storage across all Locust users
+
 class TokenManager:
     _lock = threading.Lock()
     access_token = None
@@ -14,7 +14,7 @@ class TokenManager:
         Perform login once to get initial tokens.
         """
         with cls._lock:
-            if cls.access_token:  # already logged in
+            if cls.access_token:
                 return
 
             login_payload = {
@@ -66,22 +66,22 @@ class OfficerTasks(TaskSet):
         """
         TokenManager.login(self.client)
 
-    @task(3)
+    @task(4)
     def get_links(self):
         if TokenManager.headers:
             self.client.get("/alxET-rt-api/dashboard/officer-dash/links/", headers=TokenManager.headers)
 
-    @task(2)
+    @task(4)
     def get_stats(self):
         if TokenManager.headers:
             self.client.get("/alxET-rt-api/dashboard/officer-dash/stats/", headers=TokenManager.headers)
 
-    @task(2)
+    @task(3)
     def get_campaign_stats(self):
         if TokenManager.headers:
             self.client.get("/alxET-rt-api/dashboard/officer-dash/stats/campaigns/", headers=TokenManager.headers)
 
-    @task(2)
+    @task(3)
     def get_timeline(self):
         if TokenManager.headers:
             self.client.get("/alxET-rt-api/dashboard/officer-dash/stats/timeline/", headers=TokenManager.headers)

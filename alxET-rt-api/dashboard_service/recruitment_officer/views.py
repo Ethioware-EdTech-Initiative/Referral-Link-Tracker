@@ -16,7 +16,10 @@ class ReferralLinkViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = OfficerReferralLinkSerializer
 
     def get_queryset(self):
-        return ReferralLink.objects.filter(officer=self.request.user.officer_profile)
+        return (ReferralLink.objects
+                .filter(officer=self.request.user.officer_profile)
+                .select_related("campaign"))
+
 
 
 class StatsViewSet(viewsets.ViewSet):

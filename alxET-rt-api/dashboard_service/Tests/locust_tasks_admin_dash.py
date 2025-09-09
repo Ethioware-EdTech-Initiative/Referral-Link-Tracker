@@ -5,7 +5,6 @@ CAMPAIGN_ID = "bd84c619-5c61-4348-b5e3-9ae4cd60f05e"
 OFFICER_ID = "9296a485-08f8-4f56-b81d-5b1fd0722e4e"
 
 
-# Shared token storage for Admin users
 class AdminTokenManager:
     _lock = threading.Lock()
     access_token = None
@@ -85,12 +84,12 @@ class AdminTasks(TaskSet):
             payload = {"officer": OFFICER_ID, "campaign": CAMPAIGN_ID}
             self.client.post("/alxET-rt-api/dashboard/admin-dash/links/gen-link/", json=payload, headers=AdminTokenManager.headers)
 
-    @task(2)
+    @task(3)
     def get_metrics(self):
         if AdminTokenManager.headers:
             self.client.get("/alxET-rt-api/dashboard/admin-dash/metrics/", headers=AdminTokenManager.headers)
 
-    @task(2)
+    @task(3)
     def get_stats(self):
         if AdminTokenManager.headers:
             self.client.get("/alxET-rt-api/dashboard/admin-dash/stats/", headers=AdminTokenManager.headers)

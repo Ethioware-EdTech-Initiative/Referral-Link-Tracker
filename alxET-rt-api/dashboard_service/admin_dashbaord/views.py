@@ -192,7 +192,7 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
         return Response(ReferralLinkSerializer(referral_link).data, status=status.HTTP_201_CREATED)
 
 class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = DailyMetrics.objects.all().order_by('-metric_date')
+    queryset = DailyMetrics.objects.select_related("campaign", "officer", "referral_link").order_by('-metric_date')
     serializer_class = DailyMetricsSerializer
     # permission_classes = [IsAdminUser]
     permission_classes = [AllowAny]
