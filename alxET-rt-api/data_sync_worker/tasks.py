@@ -4,14 +4,22 @@ import ssl
 from datetime import timedelta
 from urllib.parse import urlparse
 
+import redis
+import gspread
+
 from celery.utils.log import get_task_logger
 from celery import group, chain
-
 from alx_recruitment_tracker.celery import app
+
+from django.utils import timezone
+from django.db.models import Sum, Avg, Count
+from tracking_service.models import ClickEvent, SignupEvent
+from auth_service.models import Officer
+from dashboard_service.models import DailyMetrics, Campaign, ReferralLink
+
 
 logger = get_task_logger(__name__)
 
-import redis
 
 def _redis_client():
     url = os.getenv("REDIS_URL")
@@ -41,27 +49,105 @@ def set_checkpoint(task_name: str, iso_ts: str):
     except Exception:
         logger.exception("Failed to write checkpoint for %s", task_name)
 
+def _parse_service_account_json(raw):
+    """Try several ways to parse the JSON returned from env var."""
+    if isinstance(raw, dict):
+        return raw
+    try:
+        return json.loads(raw)
+    except Exception:
+        pass
+    try:
+        return json.loads(raw.replace('\\n', '\n'))
+    except Exception:
+        pass
+    try:
+        decoded = base64.b64decode(raw).decode('utf-8')
+        return json.loads(decoded)
+    except Exception:
+        pass
+    raise ValueError("Could not parse GOOGLE_SERVICE_ACCOUNT_JSON (tried raw, \\n->newline and base64)")
+
+def _write_temp_service_account_file(creds_dict):
+    """Write creds to a secure temp file and return path."""
+    fd, path = tempfile.mkstemp(prefix="gsa_", suffix=".json")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(creds_dict, f, ensure_ascii=False)
+    
+    try:
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+    except Exception:
+        pass
+    return path
+
+import os
+import json
+import base64
+import tempfile
+import stat
+import gspread
+
+def _parse_service_account_json(raw):
+    """Try several ways to parse the JSON returned from env var."""
+    if isinstance(raw, dict):
+        return raw
+    # 1) try direct JSON
+    try:
+        return json.loads(raw)
+    except Exception:
+        pass
+    # 2) try replacing escaped \\n with real newlines
+    try:
+        return json.loads(raw.replace('\\n', '\n'))
+    except Exception:
+        pass
+    # 3) try base64 decode
+    try:
+        decoded = base64.b64decode(raw).decode('utf-8')
+        return json.loads(decoded)
+    except Exception:
+        pass
+    raise ValueError("Could not parse GOOGLE_SERVICE_ACCOUNT_JSON (tried raw, \\n->newline and base64)")
+
+def _write_temp_service_account_file(creds_dict):
+    """Write creds to a secure temp file and return path."""
+    fd, path = tempfile.mkstemp(prefix="gsa_", suffix=".json")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(creds_dict, f, ensure_ascii=False)
+    # Restrict file permissions (Unix). On Windows this is best-effort.
+    try:
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+    except Exception:
+        pass
+    return path
 
 def get_google_sheet_client():
     """Get authenticated Google Sheets client.
 
     Prefer GOOGLE_SERVICE_ACCOUNT_FILE (path). Fallback to GOOGLE_SERVICE_ACCOUNT_JSON.
+    This is robust to env var containing escaped newlines or base64.
     """
-    import gspread
-
     svc_file = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE")
-    if svc_file and os.path.exists(svc_file):
-        return gspread.service_account(filename=svc_file)
+    if svc_file:
+        svc_file = os.path.expanduser(svc_file)
+        if os.path.exists(svc_file):
+            return gspread.service_account(filename=svc_file)
 
-    service_account_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-    if not service_account_json:
+    raw_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+    if not raw_json:
         raise ValueError(
             "Service account credentials not provided. "
             "Set GOOGLE_SERVICE_ACCOUNT_FILE (recommended) or GOOGLE_SERVICE_ACCOUNT_JSON."
         )
 
-    credentials = json.loads(service_account_json)
-    return gspread.service_account_from_dict(credentials)
+    creds = _parse_service_account_json(raw_json)
+    try:
+        return gspread.service_account_from_dict(creds)
+    except Exception:
+        temp_path = _write_temp_service_account_file(creds)
+        os.environ["GOOGLE_SERVICE_ACCOUNT_FILE"] = temp_path
+        return gspread.service_account(filename=temp_path)
+
 
 
 def get_sheet_id():
@@ -89,8 +175,6 @@ def export_raw_data(self):
     - Uses a checkpoint (last processed timestamp) to append only new events.
     - Idempotent-ish: we query events strictly greater than last checkpoint.
     """
-    from django.utils import timezone
-    from tracking_service.models import ClickEvent, SignupEvent
 
     task_name = "export_raw_data"
     ckpt = get_checkpoint(task_name)
@@ -199,13 +283,10 @@ def export_raw_data(self):
 
 
 @app.task(bind=True, **DEFAULT_RETRY_KW)
-def export_officer_summary(self):
+def export_officer_summary(self, *args, **kwargs):
     """
     Export aggregated officer summary to 'Officer_Summary' (overwrite mode).
     """
-    from auth_service.models import Officer
-    from dashboard_service.models import DailyMetrics
-    from django.db.models import Sum, Avg
 
     try:
         gc = get_google_sheet_client()
@@ -249,7 +330,7 @@ def export_officer_summary(self):
 
 
 @app.task(bind=True, **DEFAULT_RETRY_KW)
-def export_campaign_summary(self):
+def export_campaign_summary(self, *args, **kwargs):
     """
     Export aggregated campaign summary to 'Campaign_Summary' (overwrite mode).
 
@@ -257,8 +338,6 @@ def export_campaign_summary(self):
     - Average signups/day computed over actual number of metric days (distinct dates),
         which handles ongoing campaigns and avoids off-by-one from raw date subtraction.
     """
-    from dashboard_service.models import Campaign, DailyMetrics
-    from django.db.models import Sum, Avg, Count
 
     try:
         gc = get_google_sheet_client()
@@ -322,16 +401,13 @@ def export_campaign_summary(self):
 
 
 @app.task(bind=True, **DEFAULT_RETRY_KW)
-def export_time_series(self):
+def export_time_series(self, *args, **kwargs):
     """
     Export time series to 'Time_Series_Data' (overwrite mode).
 
     Fixes:
     - Single grouped query over the date range (no N+1/day loop).
     """
-    from django.utils import timezone
-    from dashboard_service.models import DailyMetrics
-    from django.db.models import Sum, Avg
 
     try:
         gc = get_google_sheet_client()
@@ -388,10 +464,6 @@ def calculate_daily_metrics(self):
     - Avoid per-link queries: aggregate clicks and signups grouped by referral_link_id.
     - Compute click-to-signup rate safely.
     """
-    from django.utils import timezone
-    from dashboard_service.models import ReferralLink, DailyMetrics
-    from tracking_service.models import ClickEvent, SignupEvent
-    from django.db.models import Count
 
     today = timezone.now().date()
 
