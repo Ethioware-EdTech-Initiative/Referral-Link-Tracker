@@ -6,13 +6,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Default Django settings
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "alx_recruitment_tracker.settings")
 
 app = Celery("data_sync_worker")
-
-import ssl
-
 app.conf.broker_use_ssl = {"ssl_cert_reqs": ssl.CERT_NONE}
 app.conf.redis_backend_use_ssl = {"ssl_cert_reqs": ssl.CERT_NONE}
 
@@ -50,6 +47,23 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=4, minute=30),
     },
 }
+
+# # Testing purposes 
+# app.conf.beat_schedule = {
+#     "export-raw-data": {
+#         "task": "data_sync_worker.tasks.export_raw_data",
+#         "schedule": crontab(minute="*"),  # runs every 1 minute
+#     },
+#     "export-daily-aggregates": {
+#         "task": "data_sync_worker.tasks.export_daily_aggregates",
+#         "schedule": crontab(minute="*"),  # runs every 1 minute
+#     },
+#     "export-time-series": {
+#         "task": "data_sync_worker.tasks.export_time_series",
+#         "schedule": crontab(minute="*"),  # runs every 1 minute
+#     },
+# }
+
 
 @app.task(bind=True)
 def debug_task(self):
