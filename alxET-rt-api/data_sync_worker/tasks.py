@@ -3,7 +3,7 @@ import json
 import ssl
 from datetime import timedelta
 from urllib.parse import urlparse
-
+from datetime import timezone
 import redis
 import gspread
 
