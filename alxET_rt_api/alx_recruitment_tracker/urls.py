@@ -23,12 +23,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('alxET-rt-api/auth/', include('auth_service.urls')),
     path('alxET-rt-api/tracking/', include('tracking_service.urls')),
-    path('alxET-rt-api/dashboard/', include('dashboard_service.admin_dashbaord.urls')),
-    path('alxET-rt-api/dashboard/', include('dashboard_service.recruitment_officer.urls')),
-    
-    # path('alxET-rt-api/data-sync/', include('data_sync_worker.urls')),
-    # path("alxET-rt-api/dashboard/admin-dash/", include("dashboard_service.admin_dashbaord.urls")),
-
+    path('alxET-rt-api/admin/', include('dashboard_service.admin_dashbaord.urls')),
+    path('alxET-rt-api/officer/', include('dashboard_service.recruitment_officer.urls')),
     
     path('alxET-rt-api/doc/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('alxET-rt-api/doc/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
