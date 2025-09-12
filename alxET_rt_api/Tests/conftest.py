@@ -2,7 +2,7 @@ import pytest
 import factory
 from django.utils import timezone
 from auth_service.models import User, Officer
-from ..dashboard_service.models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMetrics
+from dashboard_service.models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMetrics
 import pytest_factoryboy
 from rest_framework.test import APIClient
 

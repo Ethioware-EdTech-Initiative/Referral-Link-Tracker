@@ -16,12 +16,11 @@ celery>=5.5.3
 requests>=2.31.0
 openpyxl>=3.1.5
 flower
-
 # Testing packages 
-# pytest 
-# pytest-django 
-# pytest-factoryboy 
-# coverage 
-# pytest-cov 
-# pytest-html
-# locust
+pytest 
+pytest-django 
+pytest-factoryboy 
+coverage 
+pytest-cov 
+pytest-html
+locust
