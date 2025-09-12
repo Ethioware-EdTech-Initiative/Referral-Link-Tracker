@@ -13,3 +13,4 @@ myenv/
 schema.yml
 .env.*
 ../.env.*
+.vercel
