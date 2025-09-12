@@ -4,7 +4,7 @@ from rest_framework import status
 from django.urls import reverse
 from dashboard_service.models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMetrics
 from auth_service.models import Officer, User, Audit_Log
-from dashboard_service.Tests.conftest import (
+from .conftest import (
     UserFactory, OfficerFactory, CampaignFactory,
     OfficerCampaignAssignmentFactory, ReferralLinkFactory, DailyMetricsFactory
 )

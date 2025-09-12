@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 from django.urls import reverse
-from dashboard_service.Tests.conftest import (
+from .conftest import (
     UserFactory, OfficerFactory, CampaignFactory,
     ReferralLinkFactory, DailyMetricsFactory, OfficerCampaignAssignmentFactory
 )

@@ -1,6 +1,6 @@
 import pytest
 from django.utils import timezone
-from ..admin_dashbaord.serializers import (
+from ..dashboard_service.admin_dashbaord.serializers import (
     CampaignCreateUpdateSerializer,
     OfficerCreateSerializer,
     OfficerCampaignAssignmentCreateSerializer,
