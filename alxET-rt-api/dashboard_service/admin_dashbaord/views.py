@@ -22,13 +22,13 @@ from .serializers import (
 
 from ..utils import generate_referral_code
 from django.conf import settings
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, AllowAny
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
 
 class OfficerViewSet(viewsets.ModelViewSet):
-    queryset = Officer.objects.select_related("user")
+    queryset = Officer.objects.select_related("user").order_by("id") 
     # permission_classes = [IsAdminUser]
     serializer_class = OfficerSerializer
     trottle_scope = "admin_moderate"
@@ -51,7 +51,8 @@ class OfficerViewSet(viewsets.ModelViewSet):
 
 class CampaignViewSet(viewsets.ModelViewSet):
     queryset = Campaign.objects.all().order_by('-created_at')
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     trottle_scope = "admin_moderate"
 
     def get_serializer_class(self):
@@ -99,7 +100,7 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
 
 class OfficerCampaignAssignmentViewSet(viewsets.ModelViewSet):
-    queryset = OfficerCampaignAssignment.objects.all()
+    queryset = OfficerCampaignAssignment.objects.all().order_by("id")
     # permission_classes = [IsAdminUser]
 
     trottle_scope = "admin_moderate"
@@ -147,6 +148,7 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
 
     queryset = ReferralLink.objects.select_related("officer__user", "campaign").order_by('-created_at')
     # permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     trottle_scope = "admin_strict"
     http_method_names = ["get", "delete", "post"]
     
@@ -163,22 +165,37 @@ class ReferralLinkViewSet(viewsets.ModelViewSet):
         officer = serializer.validated_data["officer"]
         campaign = serializer.validated_data["campaign"]
 
-        ref_code = generate_referral_code(str(campaign.id), str(officer.id), settings.SECRET_KEY)
-        full_link = f"https://referral-link-tracker.vercel.app/alxET-rt-api/tracking/referral/{ref_code}/"
-        referral_link = ReferralLink.objects.create(
-            officer=officer,
-            campaign=campaign,
-            ref_code=ref_code,
-            full_link=full_link,
-            is_active=True,
-        )
+        max_attempts = 5
+        referral_link = None
+
+        for _ in range(max_attempts):
+            ref_code = generate_referral_code(str(campaign.id), str(officer.id), settings.SECRET_KEY, length=32)
+            full_link = f"https://referral-link-tracker.vercel.app/alxET-rt-api/tracking/referral/{ref_code}/"
+            try:
+                referral_link = ReferralLink.objects.create(
+                    officer=officer,
+                    campaign=campaign,
+                    ref_code=ref_code,
+                    full_link=full_link,
+                    is_active=True,
+                )
+                break  # success
+            except IntegrityError:
+                continue  # retry with a fresh code
+
+        if referral_link is None:
+            return Response(
+                {"detail": "Failed to generate unique referral link after multiple attempts."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response(ReferralLinkSerializer(referral_link).data, status=status.HTTP_201_CREATED)
 
 class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = DailyMetrics.objects.all().order_by('-metric_date')
+    queryset = DailyMetrics.objects.select_related("campaign", "officer", "referral_link").order_by('-metric_date')
     serializer_class = DailyMetricsSerializer
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     throttle_scope = "admin_moderate"
 
     @method_decorator(cache_page(60))
@@ -187,7 +204,8 @@ class DailyMetricsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class StatsViewSet(viewsets.ViewSet):
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
     trottle_scope = "admin_moderate"
     pagination_class = None
     

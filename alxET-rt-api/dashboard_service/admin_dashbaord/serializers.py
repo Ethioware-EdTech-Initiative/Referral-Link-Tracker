@@ -77,14 +77,14 @@ class CampaignCreateUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"end_date": "End date must be after start date."})
         if Campaign.objects.filter(name=data.get("name")).exclude(pk=getattr(self.instance, "pk", None)).exists():
             raise serializers.ValidationError({"name": "Campaign with this name already exists."})
-        if self.instance and self.instance.start_date < now().date() and "start_date" in data:
+        if self.instance and self.instance.start_date.date() < now().date() and "start_date" in data:
             raise serializers.ValidationError({"start_date": "Cannot modify start_date of past campaigns."})
         return data
 
 
 class OfficerCampaignAssignmentSerializer(serializers.ModelSerializer):
-    officer = OfficerSerializer(read_only=True)
-    campaign = CampaignSerializer(read_only=True)
+    officer = serializers.PrimaryKeyRelatedField(queryset=Officer.objects.all())
+    campaign = serializers.PrimaryKeyRelatedField(queryset=Campaign.objects.all())
 
     class Meta:
         model = OfficerCampaignAssignment
