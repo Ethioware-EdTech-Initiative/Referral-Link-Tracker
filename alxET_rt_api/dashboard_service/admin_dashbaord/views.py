@@ -51,8 +51,8 @@ class OfficerViewSet(viewsets.ModelViewSet):
 
 class CampaignViewSet(viewsets.ModelViewSet):
     queryset = Campaign.objects.all().order_by('-created_at')
-    # permission_classes = [IsAdminUser]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
+    # permission_classes = [AllowAny]
     trottle_scope = "admin_moderate"
 
     def get_serializer_class(self):

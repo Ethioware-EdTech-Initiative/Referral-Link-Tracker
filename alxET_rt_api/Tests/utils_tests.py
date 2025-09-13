@@ -10,7 +10,7 @@ def test_generate_referral_code_returns_string(campaign_factory, officer_factory
     officer = officer_factory()
     code = generate_referral_code(str(campaign.id), str(officer.id))
     assert isinstance(code, str)
-    assert len(code) == 16
+    assert len(code) == 32
     assert re.fullmatch(r"[0-9a-f]{16}", code)  # only hex chars
 
 def test_generate_referral_code_uses_custom_secret_key(campaign_factory, officer_factory):

@@ -3,6 +3,7 @@ import factory
 from django.utils import timezone
 from auth_service.models import User, Officer
 from dashboard_service.models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMetrics
+from tracking_service.models import ClickEvent, SignupEvent
 import pytest_factoryboy
 from rest_framework.test import APIClient
 
@@ -55,6 +56,25 @@ class ReferralLinkFactory(factory.django.DjangoModelFactory):
     ref_code = factory.Sequence(lambda n: f"code{n}")
     is_active = True
 
+class ClickEventFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ClickEvent
+
+    referral_link = factory.SubFactory(ReferralLinkFactory)
+    timestamp = factory.LazyFunction(timezone.now)
+    ip = "127.0.0.1"
+    user_agent = "test-agent"
+
+
+class SignupEventFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SignupEvent
+
+    click_event = factory.SubFactory(ClickEventFactory)
+    referral_link = factory.SelfAttribute("click_event.referral_link")
+    timestamp = factory.LazyFunction(timezone.now)
+    conversion_minutes = 5
+    fraud_score = 0.0
 
 class DailyMetricsFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -75,3 +95,5 @@ pytest_factoryboy.register(CampaignFactory)
 pytest_factoryboy.register(OfficerCampaignAssignmentFactory)
 pytest_factoryboy.register(ReferralLinkFactory)
 pytest_factoryboy.register(DailyMetricsFactory)
+pytest_factoryboy.register(ClickEventFactory)
+pytest_factoryboy.register(SignupEventFactory)

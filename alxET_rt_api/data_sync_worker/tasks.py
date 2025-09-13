@@ -4,6 +4,7 @@ import ssl
 from datetime import timedelta
 from urllib.parse import urlparse
 from datetime import timezone
+from datetime import timezone as dt_timezone
 import redis
 import gspread
 
@@ -182,7 +183,7 @@ def export_raw_data(self):
     if ckpt:
         since = timezone.datetime.fromisoformat(ckpt)
         if timezone.is_naive(since):
-            since = timezone.make_aware(since, timezone=timezone.utc)
+            since = timezone.make_aware(since, timezone=dt_timezone.utc)
     else:
         since = timezone.now() - timedelta(hours=24)
 
@@ -271,7 +272,7 @@ def export_raw_data(self):
                 ws.append_rows(rows[i : i + CHUNK])
 
             if max_ts:
-                max_ts_iso = max_ts.astimezone(tz=timezone.utc).isoformat()
+                max_ts_iso = max_ts.astimezone(tz=dt_timezone.utc).isoformat()
                 set_checkpoint(task_name, max_ts_iso)
 
         logger.info("Raw export appended %d rows (since %s).", len(rows), since.isoformat())
