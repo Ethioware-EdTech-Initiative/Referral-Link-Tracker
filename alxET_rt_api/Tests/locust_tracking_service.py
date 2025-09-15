@@ -4,9 +4,9 @@ import time
 
 
 REF_CODES = [
-    "82b54383957a2f4e",
-    "81cd468301fc1863",
-    "47b2720e2312aa42",
+    "f5c8194728343323",
+    # "81cd468301fc1863",
+    # "47b2720e2312aa42",
 ]
 
 class TrackingTasks(TaskSet):

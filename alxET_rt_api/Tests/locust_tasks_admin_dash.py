@@ -71,28 +71,28 @@ class AdminTasks(TaskSet):
     @task(3)
     def get_campaigns(self):
         if AdminTokenManager.headers:
-            self.client.get("/alxET-rt-api/dashboard/admin-dash/campaigns/", headers=AdminTokenManager.headers)
+            self.client.get("/alxET-rt-api/admin/admin-dash/campaigns/", headers=AdminTokenManager.headers)
 
     @task(2)
     def get_links(self):
         if AdminTokenManager.headers:
-            self.client.get("/alxET-rt-api/dashboard/admin-dash/links/", headers=AdminTokenManager.headers)
+            self.client.get("/alxET-rt-api/admin/admin-dash/links/", headers=AdminTokenManager.headers)
 
     @task(1)
     def generate_link(self):
         if AdminTokenManager.headers:
             payload = {"officer": OFFICER_ID, "campaign": CAMPAIGN_ID}
-            self.client.post("/alxET-rt-api/dashboard/admin-dash/links/gen-link/", json=payload, headers=AdminTokenManager.headers)
+            self.client.post("/alxET-rt-api/admin/admin-dash/links/gen-link/", json=payload, headers=AdminTokenManager.headers)
 
     @task(3)
     def get_metrics(self):
         if AdminTokenManager.headers:
-            self.client.get("/alxET-rt-api/dashboard/admin-dash/metrics/", headers=AdminTokenManager.headers)
+            self.client.get("/alxET-rt-api/admin/admin-dash/metrics/", headers=AdminTokenManager.headers)
 
     @task(3)
     def get_stats(self):
         if AdminTokenManager.headers:
-            self.client.get("/alxET-rt-api/dashboard/admin-dash/stats/", headers=AdminTokenManager.headers)
+            self.client.get("/alxET-rt-api/admin/admin-dash/stats/", headers=AdminTokenManager.headers)
 
 
 class AdminUser(HttpUser):

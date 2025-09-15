@@ -69,22 +69,22 @@ class OfficerTasks(TaskSet):
     @task(4)
     def get_links(self):
         if TokenManager.headers:
-            self.client.get("/alxET-rt-api/dashboard/officer-dash/links/", headers=TokenManager.headers)
+            self.client.get("/alxET-rt-api/officer/officer-dash/links/", headers=TokenManager.headers)
 
     @task(4)
     def get_stats(self):
         if TokenManager.headers:
-            self.client.get("/alxET-rt-api/dashboard/officer-dash/stats/", headers=TokenManager.headers)
+            self.client.get("/alxET-rt-api/officer/officer-dash/stats/", headers=TokenManager.headers)
 
     @task(3)
     def get_campaign_stats(self):
         if TokenManager.headers:
-            self.client.get("/alxET-rt-api/dashboard/officer-dash/stats/campaigns/", headers=TokenManager.headers)
+            self.client.get("/alxET-rt-api/officer/officer-dash/stats/campaigns/", headers=TokenManager.headers)
 
     @task(3)
     def get_timeline(self):
         if TokenManager.headers:
-            self.client.get("/alxET-rt-api/dashboard/officer-dash/stats/timeline/", headers=TokenManager.headers)
+            self.client.get("/alxET-rt-api/officer/officer-dash/stats/timeline/", headers=TokenManager.headers)
 
 
 class OfficerUser(HttpUser):
