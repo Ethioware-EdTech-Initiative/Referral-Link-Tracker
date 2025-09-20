@@ -38,7 +38,7 @@ class LoginRateThrottle(AnonRateThrottle):
 class LoginView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
-    throttle_classes = [LoginRateThrottle]
+    # throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -96,7 +96,7 @@ class LogOutView(APIView):
         
 class ChangePasswordView(APIView):
     serializer_class = ChangePasswordSerializer
-    
+    permission_classes = [permissions.IsAuthenticated]
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid():

@@ -1,7 +1,7 @@
 import pytest
 import re
 from unittest import mock
-from ..dashboard_service.utils import generate_referral_code
+from dashboard_service.utils import generate_referral_code
 
 pytestmark = pytest.mark.django_db
 

@@ -8,7 +8,7 @@ from django.utils import timezone
 
 pytestmark = pytest.mark.django_db
 
-TASKS_MODULE = "alx_recruitment_tracker.tasks"
+TASKS_MODULE = "alx_recruitment_tracker.celery"
 tasks = importlib.import_module(TASKS_MODULE)
 
 

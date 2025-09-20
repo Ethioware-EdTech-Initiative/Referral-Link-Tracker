@@ -2,7 +2,7 @@ import pytest
 import factory
 from django.utils import timezone
 from auth_service.models import User, Officer
-from ..dashboard_service.models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMetrics
+from dashboard_service.models import Campaign, OfficerCampaignAssignment, ReferralLink, DailyMetrics
 import pytest_factoryboy
 from rest_framework.test import APIClient
 
@@ -66,7 +66,6 @@ class DailyMetricsFactory(factory.django.DjangoModelFactory):
     metric_date = factory.LazyFunction(lambda: timezone.now().date())
     total_clicks = 10
     total_signups = 5
-
 
 
 pytest_factoryboy.register(UserFactory)
