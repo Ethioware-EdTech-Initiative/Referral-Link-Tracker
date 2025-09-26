@@ -25,7 +25,7 @@
    - 5.1 Context Diagram & Data Flow  
    - 5.2 High-Level Components  
 
----
+
 
 # Part II — Frontend Documentation (Next.js)
 
@@ -43,7 +43,7 @@
    - 6.11 Data Privacy  
    - 6.12 Validation Layers  
 
----
+
 
 # Part III — Backend Documentation (Django/DRF)
 
@@ -57,7 +57,7 @@
 14. API Documentation Generation  
 15. Execution Plan by Phases (Backend)  
 
----
+
 
 # Part IV — Shared API Specification
 
@@ -79,7 +79,7 @@
 26. Reporting & Exports  
 27. Data Governance & Quality  
 
----
+
 
 # Part VI — Operations & Maintenance
 
@@ -88,7 +88,7 @@
 31. Testing & Quality Assurance (Cross-Team)  
 32. DevOps & Deployment (Cross-Team)  
 
----
+
 
 # Part VII — Appendices
 
