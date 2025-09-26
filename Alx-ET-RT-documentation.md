@@ -1,4 +1,4 @@
-[![Preview](https://i.ibb.co/4R4kKyfn/1721195531703.png)](https://github.com/YourUsername/YourRepo)
+<img width="1406" height="607" alt="image" src="https://github.com/user-attachments/assets/d1dfed9d-3c23-48a6-8c16-2e4e1f64da6a" />[![Preview](https://i.ibb.co/4R4kKyfn/1721195531703.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 
 # Table of Contents
@@ -323,7 +323,8 @@ The ALX Recruitment Tracker must provide the following key functional capabiliti
 
 ### **4.1 Primary Users Flows**
 
-![[Pasted image 20250815104141.png]]
+
+[![Preview](https://i.ibb.co/sJNqzqkW/Pasted-image-20250815104141.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 
 ### **4.2 Key Screens** 
@@ -366,8 +367,8 @@ Flow:
     
 6. **Dashboards & Reports** — Aggregated data feeds into frontend dashboards and Google Sheets.
     
+[![Preview](https://i.ibb.co/Z1BtR0Qm/Pasted-image-20250810201621.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
-![[Pasted image 20250810201621.png]]
 
 
 ### **5.2 High-Level Components**
@@ -381,7 +382,7 @@ Flow:
 - **External Services** — Google Sheets API for exports.
     
 
-![[Pasted image 20250810201310.png]]
+[![Preview](https://i.ibb.co/6RnXt8JT/Pasted-image-20250810201310.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 
 
@@ -503,7 +504,8 @@ web/
 5. Fetches user profile via `/api/me`
 
 
-    ![[Pasted image 20250815113635.png]]
+
+[![Preview](https://i.ibb.co/8DpGnQ6J/Pasted-image-20250815113635.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 **Session Maintenance**
 
@@ -689,7 +691,7 @@ web/
 
 ### 15. Models & Database Schema
 
-![[Pasted image 20250810202435.png]]
+[![Preview](https://i.ibb.co/VpJBZNv5/Pasted-image-20250810202435.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 ### 16. Core Functional Flows
 
@@ -701,7 +703,8 @@ web/
     
 - Save referral link in DB; enforce max links per officer.
 
-    ![[Pasted image 20250815115431.png]]
+[![Preview](https://i.ibb.co/ym6MyLdr/Pasted-image-20250815115431.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
+  
 
 **16.2 Click Tracking Flow**
 
@@ -713,7 +716,8 @@ web/
     
 - Redirect to `sign_up` page.
 
-	![[Pasted image 20250815115550.png]]
+
+[![Preview](https://i.ibb.co/tTSgnM0v/Pasted-image-20250815115550.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 **16.3 Signup Tracking Flow**
 
@@ -724,8 +728,7 @@ web/
 - Increment `signup_count`.
     
 - Update dashboard metrics in real-time (Redis caching).
-
-  ![[Pasted image 20250815115837.png]]
+[![Preview](https://i.ibb.co/1YZJKKPF/Pasted-image-20250815115837.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 **16.4 Data Aggregation & Export Flow**
 
@@ -735,7 +738,8 @@ web/
     
 - Export to Google Sheets using Google Sheets API.
     
-  ![[Pasted image 20250815115958.png]]
+[![Preview](https://i.ibb.co/CpLZDKnP/Pasted-image-20250815115949.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
+
 ### 17. Authentication & Authorization
 
 **17.1 JWT Authentication**
@@ -960,7 +964,7 @@ web/
 - **Progress Tracking**: Historical clicks/sign-ups timeline  
 - **Campaign Breakdown**: Performance per assigned campaign  
 
-  ![[Pasted image 20250815131831.png]]
+[![Preview](https://i.ibb.co/5xjf79ZZ/Pasted-image-20250815131831.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 ### **32. Advanced Insights & Analysis**  
 
@@ -1054,7 +1058,7 @@ web/
     
 - **End-to-End Tests** — full funnel from click → signup → enrollment
     
-    ![[Pasted image 20250815133639.png]]
+[![Preview](https://i.ibb.co/1f8jPSVp/Pasted-image-20250815133639.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 ### 39. DevOps & Deployment (Cross-Team)
 
