@@ -1,4 +1,4 @@
-<img width="1406" height="607" alt="image" src="https://github.com/user-attachments/assets/d1dfed9d-3c23-48a6-8c16-2e4e1f64da6a" />[![Preview](https://i.ibb.co/4R4kKyfn/1721195531703.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
+[![Preview](https://i.ibb.co/4R4kKyfn/1721195531703.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 
 # Table of Contents
