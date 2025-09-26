@@ -1,85 +1,97 @@
 ![[1721195531703.png]]
 
 
-**Table of Contents**  
-0.2 Version & Date  
-0.3 Document Owner & Contributors
+# Table of Contents
 
-**Part I — General Overview** 
+## 0.2 Version & Date  
+## 0.3 Document Owner & Contributors  
 
-1. Executive Summary 
-    
-2. Stakeholders & Governance 
-    
-3. Business Requirements 
-      3.1 Functional Requirements 
-      3.2 KPIs & Measurement Plan
-        Core KPIs
-        Measurement Approach 
-      3.3 Non-Functional Requirements 
-    
-4. Product & UX Overview 
-      4.1 Primary User Flows 
-      4.2 Key Screens 
-      4.3 Accessibility & Internationalization Guidelines 
-    
-5. System Architecture (End-to-End)
-      5.1 Context Diagram & Data Flow 
-      5.2 High-Level Components 
-    
-<div style="page-break-before: always;"></div>
+---
 
-**Part II — Frontend Documentation (Next.js)**
-6. Tech Stack & Key Design Decisions
-  6.1 Core Technologies 
-  6.2 Critical Architecture Choices 
-  6.3 Route Protection Matrix  
-  6.4 Login Sequence 
-  6.5 Session Maintenance 
-  6.6 Fetching Patterns 
-  6.7 Error Handling
-  6.8 Link Generation
-  6.9 Attribution Tracking 
-  6.10 Core Protocols 
-  6.11 Data Privacy
-  6.12 Validation Layers 
-<div style="page-break-before: always;"></div>
+# Part I — General Overview  
 
-**Part III — Backend Documentation (Django/DRF)**
-7. Tech Stack & Service Overview
+1. Executive Summary  
+2. Stakeholders & Governance  
+3. Business Requirements  
+   - 3.1 Functional Requirements  
+   - 3.2 KPIs & Measurement Plan  
+     - Core KPIs  
+     - Measurement Approach  
+   - 3.3 Non-Functional Requirements  
+4. Product & UX Overview  
+   - 4.1 Primary User Flows  
+   - 4.2 Key Screens  
+   - 4.3 Accessibility & Internationalization Guidelines  
+5. System Architecture (End-to-End)  
+   - 5.1 Context Diagram & Data Flow  
+   - 5.2 High-Level Components  
+
+---
+
+# Part II — Frontend Documentation (Next.js)
+
+6. Tech Stack & Key Design Decisions  
+   - 6.1 Core Technologies  
+   - 6.2 Critical Architecture Choices  
+   - 6.3 Route Protection Matrix  
+   - 6.4 Login Sequence  
+   - 6.5 Session Maintenance  
+   - 6.6 Fetching Patterns  
+   - 6.7 Error Handling  
+   - 6.8 Link Generation  
+   - 6.9 Attribution Tracking  
+   - 6.10 Core Protocols  
+   - 6.11 Data Privacy  
+   - 6.12 Validation Layers  
+
+---
+
+# Part III — Backend Documentation (Django/DRF)
+
+7. Tech Stack & Service Overview  
 8. Modular Django Apps Structure  
-9. Models & Database Schema 
-10. Core Functional Flows 
-11. Performance Optimization & Caching
-12. Background Tasks & Scheduling 
-13. Error Handling 
-14. API Documentation Generation 
-15. Execution Plan by Phases (Backend)
+9. Models & Database Schema  
+10. Core Functional Flows  
+11. Performance Optimization & Caching  
+12. Background Tasks & Scheduling  
+13. Error Handling  
+14. API Documentation Generation  
+15. Execution Plan by Phases (Backend)  
 
-**Part IV — Shared API Specification** 
+---
+
+# Part IV — Shared API Specification
+
 16. API Standards & Guidelines  
-17. Authentication & Session Flow 
-18. RBAC in APIs 
-19. Endpoint Catalog (High-Level) 
+17. Authentication & Session Flow  
+18. RBAC in APIs  
+19. Endpoint Catalog (High-Level)  
 20. Tracking API Details  
-21. API Performance & Limits 
+21. API Performance & Limits  
 
-**Part V — Data & Analytics Documentation** 
-22. Metrics Catalog & KPI Definitions 
-23. Data Models & Event Schema 
-24. Dashboards
-25. Advanced Insights & Analysis 
-26. Reporting & Exports 
-27. Data Governance & Quality 
-<div style="page-break-before: always;"></div>
+---
 
-**Part VI — Operations & Maintenance** 
-29. Security, Privacy & Compliance 
-30. Performance & Reliability 
-31. Testing & Quality Assurance (Cross-Team) 
-32. DevOps & Deployment (Cross-Team) 
+# Part V — Data & Analytics Documentation
 
-**Part VII — Appendices**
+22. Metrics Catalog & KPI Definitions  
+23. Data Models & Event Schema  
+24. Dashboards  
+25. Advanced Insights & Analysis  
+26. Reporting & Exports  
+27. Data Governance & Quality  
+
+---
+
+# Part VI — Operations & Maintenance
+
+29. Security, Privacy & Compliance  
+30. Performance & Reliability  
+31. Testing & Quality Assurance (Cross-Team)  
+32. DevOps & Deployment (Cross-Team)  
+
+---
+
+# Part VII — Appendices
 
 <div style="page-break-before: always;"></div>
 
