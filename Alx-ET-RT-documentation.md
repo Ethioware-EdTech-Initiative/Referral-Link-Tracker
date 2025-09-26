@@ -6,7 +6,6 @@
 ## 0.2 Version & Date  
 ## 0.3 Document Owner & Contributors  
 
----
 
 # Part I — General Overview  
 
