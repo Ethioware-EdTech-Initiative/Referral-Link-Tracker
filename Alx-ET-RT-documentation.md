@@ -666,7 +666,7 @@ web/
     
 - **PostgreSQL:** Relational database with strong support for indexing and constraints.
     
-- **HMAC_SHA256:** Secure referral code generation.
+- **Testing:** # pytest pytest-factoryboy(facking data)   pytest-cov(esting coverage area)  pytest-html(for nice reporting)  locust (load testing).
     
 
 **13.2 Justification for Tech Choices**
@@ -691,7 +691,7 @@ web/
 
 ### 15. Models & Database Schema
 
-[![Preview](https://i.ibb.co/VpJBZNv5/Pasted-image-20250810202435.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
+[![Preview](https://i.ibb.co/4wVhCyx3/alx-ETrt-schema-1.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 ### 16. Core Functional Flows
 
@@ -764,52 +764,134 @@ web/
 
 **18.1 Redis Caching Strategy**
 
-- Cache dashboard metrics (signups/clicks/conversion rate).
+- Applied caching on frequent and expensive **GET** requests to reduce database hits.
     
-- Cache frequent GET requests to reduce DB hits.
+- Cached heavy aggregate queries (e.g., admin dashboards, officer stats) with short TTLs (10–60s) to balance freshness and performance.
     
+- Officer-specific stats cached per-user to isolate data and avoid cross-user leaks.
+    
+
 ### 19. Background Tasks & Scheduling
 
 **19.1 Celery Worker Setup**
 
-- Use Redis broker; set concurrency limits to handle traffic spikes.
+- Background workers configured using **Celery** with Redis broker.
+    
+- Tasks include data exports, metrics aggregation.
     
 
-**19.2 Export Job Flow to Google Sheets**
+**19.2 Export Job Flow**
 
-- periodic schedule: fetch aggregated metrics → format → update sheet.
+- Scheduled background jobs periodically sync system data with external storage and reporting platforms (e.g., Google Sheets).
+    
 
 **19.3 Retry & Error Handling Policies**
 
-- Use Celery built-in retries; log errors.
+- Celery built-in retries used for transient failures (e.g., Redis disconnects, API timeouts).
     
-- Send notifications on repeated failures.
+- Errors logged centrally for monitoring and debugging.
+    
 
+**19.4 Monitoring & Visibility**
+
+- Workers monitored through a task monitoring dashboard (Flower).
+    
+- Provides insight into task queues, retry counts, worker health, and throughput.
+    
 ### 20. Error Handling
 
 **20.1 Centralized Exception Handling**
 
-- DRF exception handler override for API consistency.
+- Implemented a custom **DRF exception handler override** to standardize API responses.
+    
+- Validation ensures business rules (e.g., campaign dates, officer assignments) are enforced at the API layer.
 
 ### 21. API Documentation Generation
 
 **21.1 django-spectacular Setup**
 
-- Automatic OpenAPI 3.0 docs.
+- Automatic **OpenAPI 3.0** documentation generated using django-spectacular.
     
-- Includes **pagination, throttling, query optimization** for endpoints.
+- Documentation includes details on authentication, pagination, throttling, and query parameters.
+    
+- Developers can explore endpoints through interactive Swagger/ReDoc interfaces.
+    
+
+**21.2 API Consistency**
+
+- Documentation updated alongside schema changes to ensure reliability.
+    
+- Versioning supported for future backward compatibility.
+    
+
+### 22. Testing & Quality Assurance
+
+**22.1 Unit & Integration Testing**
+
+- Frameworks used: `pytest`, `pytest-django`, `pytest-factoryboy`.
+    
+- Coverage tools: `coverage` and `pytest-cov` with enforced thresholds (e.g., ≥80%).
+    
+- Structured test reporting via `pytest-html`.
+    
+- Tests executed on both local development and deployment servers to validate consistency.
+    
+
+**22.2 Performance & Load Testing**
+
+- Load testing conducted with `locust`.
+    
+- Scenarios :
+    
+    - Tracking service load tests 
+        
+    - dashboard service (admin and officer) load tests 
+        
+    - combined load test 
+        
+- Results documented with charts and screenshots of response times, request throughput, and error rates.
+    
+
+**22.3 Background Worker Reliability**
+
+- Verified worker resilience with Redis broker, Celery workers, and Celery Beat scheduler.
+    
+- Real-time task monitoring performed via Flower
+    
+
+**22.4 Deployment & Server Validation**
+    
+- Coverage and load tests rerun against staging/production-like environments.
+    
+- Reports archived as part of deployment documentation for transparency.
+    
+
+**22.5 Reporting & Artifacts**
+
+- Generated HTML/PDF reports for test results, coverage metrics, and load testing.
+    
+- Visual documentation includes:
+        
+    - Locust performance graphs.
+        
+    - Flower monitoring dashboard screenshots.
+    
 
 
-### 22. Execution Plan by Phases (Backend)
+### 23. Execution Plan by Phases (Backend)
 
-| **Week**   | **Phase**                                | **Backend Tasks**                                                                                                                                                                        |
-| ---------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Week 1** | **Setup & Architecture**                 | - Django project & virtual environment setup- GitHub repo & branching strategy- Define ER diagram & DB schema- Implement models & run migrations                                         |
-| **Week 2** | **Core Views & Serializers (Part 1)**    | - Implement serializers & views for Officer, Campaign, Referral, ClickLog, SignupLog- Start referral link generation logic (HMAC)- Register Officers & authentication                    |
-| **Week 3** | **Core Views & Serializers (Part 2)**    | - Complete referral link generation- Implement click tracking & signup tracking- Pagination, filtering, throttling, query optimization                                                   |
-| **Week 4** | **Advanced Features & Reporting**        | - Advanced filtering & reporting endpoints- Nested serializers & complex relationships- Permissions & role-based access control- Optimizations for large datasets                        |
-| **Week 5** | **Exports & Integration**                | - Implement export (CSV/Excel)- Integrate Google Sheets API- Add Celery for scheduled exports- Support frontend API integration                                                          |
-| **Week 6** | **Testing, Documentation & Launch Prep** | - Unit tests for core logic & exports- Full integration & end-to-end testing- API documentation (django-spectacular)- Performance, security checks- Deployment prep & final deliverables |
+| **Week**    | **Phase**                              | **Backend Tasks**                                                                                                                                                        |
+| ----------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Week 1**  | **Setup & Architecture**               | - Define requirements and architecture - Set up Django project & virtual environment - Initialize GitHub repo & branching strategy - Design ER diagram & database schema |
+| **Week 2**  | **Core Models & Migrations**           | - Implement models for Officer, Campaign, Referral, ClickLog, SignupLog - Run initial migrations - Deploy database (PostgreSQL) and validate schema                      |
+| **Week 3**  | **Core Views & Serializers (Part 1)**  | - Implement serializers & views for Officer, Campaign, Referral - Add referral link generation logic (HMAC) - Configure authentication & registration                    |
+| **Week 4**  | **Core Views & Serializers (Part 2)**  | - Implement click tracking & signup tracking flows - Add pagination, filtering, throttling - Apply query optimization for core endpoints                                 |
+| **Week 5**  | **Advanced Features & RBAC**           | - Implement role-based access control (Admin vs Officer) - Build admin dashboards & officer dashboards - Add audit logs and validations                                  |
+| **Week 6**  | **Background Tasks & Integration**     | - Configure Celery workers with Redis broker - Add scheduled exports with Celery Beat - Integrate Google Sheets API for reporting - Set up Flower monitoring             |
+| **Week 7**  | **Testing & Coverage (Phase 1)**       | - Set up pytest framework - Write unit and integration tests for core flows - Generate coverage and HTML test reports                                                    |
+| **Week 8**  | **Performance & Load Testing**         | - Conduct load tests with Locust - Optimize slow queries and endpoints - Measure system performance under concurrent usage                                               |
+| **Week 9**  | **Documentation & API Review**         | - Finalize API documentation with drf-spectacular (OpenAPI/Swagger) - Review pagination, throttling, and caching consistency - Update developer guidelines               |
+| **Week 10** | **Stabilization & Launch Preparation** | - Run end-to-end tests across services - Perform deployment validation  - Archive reports (coverage, load testing, monitoring) - Prepare final deliverables              |
 
 
 ## **Part IV — Shared API Specification**
