@@ -1,141 +1,141 @@
 [![Preview](https://i.ibb.co/4R4kKyfn/1721195531703.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
-### **Table of Contents**
+# ALX Recruitment Tracker - Documentation
 
-**0. Document Metadata**
-    0.1 Project Title
-    0.2 Version & Date
-    0.3 Document Owner & Contributors
-    0.4 Revision History
+## Table of Contents
 
-**Part I — General Overview**
-1. Executive Summary
-    1.1 Business Context & Problem Statement
-    1.2 Project Objectives & Success Criteria
-    1.3 Scope
-    1.4 High-Level Solution Overview
-2. Stakeholders & Governance
-    2.1 Stakeholder Map
-    2.2 Roles & Responsibilities (RBAC Overview)
-    2.3 Decision-Making & Change Management Process
-    2.4 RACI Chart
-3. Business Requirements
-    3.1 Functional Requirements
-    3.2 KPIs & Measurement Plan
-        - Core KPIs
-        - Measurement Approach
-    3.3 Non-Functional Requirements
-4. Product & UX Overview
-    4.1 Primary User Flows
-    4.2 Key Screens
-    4.3 Accessibility & Internationalization Guidelines
-5. System Architecture (End-to-End)
-    5.1 Context Diagram & Data Flow
-    5.2 High-Level Components
-    5.3 Deployment Topology & Environment Segregation
+### Document Metadata
+- [0.1 Project Title](#01-project-title)
+- [0.2 Version & Date](#02-version--date)
+- [0.3 Document Owner & Contributors](#03-document-owner--contributors)
+- [0.4 Revision History](#04-revision-history)
 
-**Part II — Frontend Documentation (Next.js)**
-6. Tech Stack & Key Design Decisions
-    6.1 Core Technologies
-    6.2 Critical Architecture Choices
-    6.3 Route Protection Matrix
-    6.4 Login Sequence
-    6.5 Session Maintenance
-    6.6 Fetching Patterns
-    6.7 Error Handling
-    6.8 Link Generation
-    6.9 Attribution Tracking
-    6.10 Core Protocols
-    6.11 Data Privacy
-    6.12 Validation Layers
-7. Architecture & Folder Structure
-8. Authentication Flow
-9. Data Handling Strategy
-10. Key Functional Modules
-11. Security Implementation
-12. Testing Approach
-13. Implementation Timeline
-14. Handover Notes
+### Part I — General Overview
+- [1. Executive Summary](#1-executive-summary)
+  - [1.1 Business Context & Problem Statement](#11-business-context--problem-statement)
+  - [1.2 Project Objectives & Success Criteria](#12-project-objectives--success-criteria)
+  - [1.3 Scope](#13-scope)
+  - [1.4 High-Level Solution Overview](#14-high-level-solution-overview)
+- [2. Stakeholders & Governance](#2-stakeholders--governance)
+  - [2.1 Stakeholder Map](#21-stakeholder-map)
+  - [2.2 Roles & Responsibilities (RBAC Overview)](#22-roles--responsibilities-rbac-overview)
+  - [2.3 Decision-Making & Change Management Process](#23-decision-making--change-management-process)
+  - [2.4 RACI Chart](#24-raci-chart)
+- [3. Business Requirements](#3-business-requirements)
+  - [3.1 Functional Requirements](#31-functional-requirements)
+  - [3.2 KPIs & Measurement Plan](#32-kpis--measurement-plan)
+  - [3.3 Non-Functional Requirements](#33-non-functional-requirements)
+- [4. Product & UX Overview](#4-product--ux-overview)
+  - [4.1 Primary User Flows](#41-primary-user-flows)
+  - [4.2 Key Screens](#42-key-screens)
+  - [4.3 Accessibility & Internationalization Guidelines](#43-accessibility--internationalization-guidelines)
+- [5. System Architecture (End-to-End)](#5-system-architecture-end-to-end)
+  - [5.1 Context Diagram & Data Flow](#51-context-diagram--data-flow)
+  - [5.2 High-Level Components](#52-high-level-components)
+  - [5.3 Deployment Topology & Environment Segregation](#53-deployment-topology--environment-segregation)
 
-**Part III — Backend Documentation (Django/DRF)**
-15. Tech Stack & Service Overview
-    15.1 Django REST Framework & Supporting Services
-    15.2 Justification for Tech Choices
-16. Modular Django Apps Structure
-17. Models & Database Schema
-18. Core Functional Flows
-    18.1 Referral Code Creation Process
-    18.2 Click Tracking Flow
-    18.3 Signup Tracking Flow
-    18.4 Data Aggregation & Export Flow
-19. Authentication & Authorization
-    19.1 JWT Authentication
-    19.2 DRF Permission Classes
-    19.3 Role-Based Access
-20. Performance Optimization & Caching
-    20.1 Redis Caching Strategy
-21. Background Tasks & Scheduling
-    21.1 Celery Worker Setup
-    21.2 Export Job Flow
-    21.3 Retry & Error Handling Policies
-    21.4 Monitoring & Visibility
-22. Error Handling
-    22.1 Centralized Exception Handling
-23. API Documentation Generation
-    23.1 django-spectacular Setup
-    23.2 API Consistency
-24. Testing & Quality Assurance
-    24.1 Unit & Integration Testing
-    24.2 Performance & Load Testing
-    24.3 Background Worker Reliability
-    24.4 Deployment & Server Validation
-    24.5 Reporting & Artifacts
-25. Execution Plan by Phases (Backend)
+### Part II — Frontend Documentation (Next.js)
+- [6. Tech Stack & Key Design Decisions](#6-tech-stack--key-design-decisions)
+  - [6.1 Core Technologies](#61-core-technologies)
+  - [6.2 Critical Architecture Choices](#62-critical-architecture-choices)
+  - [6.3 Route Protection Matrix](#63-route-protection-matrix)
+  - [6.4 Login Sequence](#64-login-sequence)
+  - [6.5 Session Maintenance](#65-session-maintenance)
+  - [6.6 Fetching Patterns](#66-fetching-patterns)
+  - [6.7 Error Handling](#67-error-handling)
+  - [6.8 Link Generation](#68-link-generation)
+  - [6.9 Attribution Tracking](#69-attribution-tracking)
+  - [6.10 Core Protocols](#610-core-protocols)
+  - [6.11 Data Privacy](#611-data-privacy)
+  - [6.12 Validation Layers](#612-validation-layers)
+- [7. Architecture & Folder Structure](#7-architecture--folder-structure)
+- [8. Authentication Flow](#8-authentication-flow)
+- [9. Data Handling Strategy](#9-data-handling-strategy)
+- [10. Key Functional Modules](#10-key-functional-modules)
+- [11. Security Implementation](#11-security-implementation)
+- [12. Testing Approach](#12-testing-approach)
+- [13. Implementation Timeline](#13-implementation-timeline)
+- [14. Handover Notes](#14-handover-notes)
 
-**Part IV — Shared API Specification**
-26. API Standards & Guidelines
-27. Authentication & Session Flow
-28. RBAC in APIs
-29. Endpoint Catalog (High-Level)
-30. Tracking API Details
-31. API Performance & Limits
+### Part III — Backend Documentation (Django/DRF)
+- [15. Tech Stack & Service Overview](#15-tech-stack--service-overview)
+  - [15.1 Django REST Framework & Supporting Services](#151-django-rest-framework--supporting-services)
+  - [15.2 Justification for Tech Choices](#152-justification-for-tech-choices)
+- [16. Modular Django Apps Structure](#16-modular-django-apps-structure)
+- [17. Models & Database Schema](#17-models--database-schema)
+- [18. Core Functional Flows](#18-core-functional-flows)
+  - [18.1 Referral Code Creation Process](#181-referral-code-creation-process)
+  - [18.2 Click Tracking Flow](#182-click-tracking-flow)
+  - [18.3 Signup Tracking Flow](#183-signup-tracking-flow)
+  - [18.4 Data Aggregation & Export Flow](#184-data-aggregation--export-flow)
+- [19. Authentication & Authorization](#19-authentication--authorization)
+  - [19.1 JWT Authentication](#191-jwt-authentication)
+  - [19.2 DRF Permission Classes](#192-drf-permission-classes)
+  - [19.3 Role-Based Access](#193-role-based-access)
+- [20. Performance Optimization & Caching](#20-performance-optimization--caching)
+  - [20.1 Redis Caching Strategy](#201-redis-caching-strategy)
+- [21. Background Tasks & Scheduling](#21-background-tasks--scheduling)
+  - [21.1 Celery Worker Setup](#211-celery-worker-setup)
+  - [21.2 Export Job Flow](#212-export-job-flow)
+  - [21.3 Retry & Error Handling Policies](#213-retry--error-handling-policies)
+  - [21.4 Monitoring & Visibility](#214-monitoring--visibility)
+- [22. Error Handling](#22-error-handling)
+  - [22.1 Centralized Exception Handling](#221-centralized-exception-handling)
+- [23. API Documentation Generation](#23-api-documentation-generation)
+  - [23.1 django-spectacular Setup](#231-django-spectacular-setup)
+  - [23.2 API Consistency](#232-api-consistency)
+- [24. Testing & Quality Assurance](#24-testing--quality-assurance)
+  - [24.1 Unit & Integration Testing](#241-unit--integration-testing)
+  - [24.2 Performance & Load Testing](#242-performance--load-testing)
+  - [24.3 Background Worker Reliability](#243-background-worker-reliability)
+  - [24.4 Deployment & Server Validation](#244-deployment--server-validation)
+  - [24.5 Reporting & Artifacts](#245-reporting--artifacts)
+- [25. Execution Plan by Phases (Backend)](#25-execution-plan-by-phases-backend)
 
-**Part V — Data & Analytics Documentation**
-32. Metrics Catalog & KPI Definitions
-    32.1 Core Performance Metrics
-    32.2 Conversion & Efficiency KPIs
-    32.3 Officer & Campaign KPIs
-    32.4 Time-Based KPIs
-    32.5 Security & Fraud KPIs
-33. Data Models & Event Schema
-    33.1 Click Event Schema
-    33.2 Signup Event Schema
-34. Dashboards
-    34.1 Admin Dashboard
-    34.2 Officer Dashboard
-35. Advanced Insights & Analysis
-    35.1 Cross-Campaign Officer Performance
-    35.2 Conversion Time Distribution
-    35.3 Fraud Risk Analysis
-36. Reporting & Exports
-    36.1 Google Sheets Structure
-    36.2 Automation Schedule
-37. Data Governance & Quality
-    37.1 Validation Rules
+### Part IV — Shared API Specification
+- [26. API Standards & Guidelines](#26-api-standards--guidelines)
+- [27. Authentication & Session Flow](#27-authentication--session-flow)
+- [28. RBAC in APIs](#28-rbac-in-apis)
+- [29. Endpoint Catalog (High-Level)](#29-endpoint-catalog-high-level)
+- [30. Tracking API Details](#30-tracking-api-details)
+- [31. API Performance & Limits](#31-api-performance--limits)
 
-**Part VI — Operations & Maintenance**
-38. Security, Privacy & Compliance
-    38.1 Threat Model & Risks
-    38.2 Security Controls
-39. Performance & Reliability
-    39.1 Load Testing
-40. Testing & Quality Assurance (Cross-Team)
-    40.1 Test Pyramid
-41. DevOps & Deployment (Cross-Team)
-    41.1 Environment Matrix
+### Part V — Data & Analytics Documentation
+- [32. Metrics Catalog & KPI Definitions](#32-metrics-catalog--kpi-definitions)
+  - [32.1 Core Performance Metrics](#321-core-performance-metrics)
+  - [32.2 Conversion & Efficiency KPIs](#322-conversion--efficiency-kpis)
+  - [32.3 Officer & Campaign KPIs](#323-officer--campaign-kpis)
+  - [32.4 Time-Based KPIs](#324-time-based-kpis)
+  - [32.5 Security & Fraud KPIs](#325-security--fraud-kpis)
+- [33. Data Models & Event Schema](#33-data-models--event-schema)
+  - [33.1 Click Event Schema](#331-click-event-schema)
+  - [33.2 Signup Event Schema](#332-signup-event-schema)
+- [34. Dashboards](#34-dashboards)
+  - [34.1 Admin Dashboard](#341-admin-dashboard)
+  - [34.2 Officer Dashboard](#342-officer-dashboard)
+- [35. Advanced Insights & Analysis](#35-advanced-insights--analysis)
+  - [35.1 Cross-Campaign Officer Performance](#351-cross-campaign-officer-performance)
+  - [35.2 Conversion Time Distribution](#352-conversion-time-distribution)
+  - [35.3 Fraud Risk Analysis](#353-fraud-risk-analysis)
+- [36. Reporting & Exports](#36-reporting--exports)
+  - [36.1 Google Sheets Structure](#361-google-sheets-structure)
+  - [36.2 Automation Schedule](#362-automation-schedule)
+- [37. Data Governance & Quality](#37-data-governance--quality)
+  - [37.1 Validation Rules](#371-validation-rules)
 
-**Part VII — Appendices**
-42. References & Linked Documents
+### Part VI — Operations & Maintenance
+- [38. Security, Privacy & Compliance](#38-security-privacy--compliance)
+  - [38.1 Threat Model & Risks](#381-threat-model--risks)
+  - [38.2 Security Controls](#382-security-controls)
+- [39. Performance & Reliability](#39-performance--reliability)
+  - [39.1 Load Testing](#391-load-testing)
+- [40. Testing & Quality Assurance (Cross-Team)](#40-testing--quality-assurance-cross-team)
+  - [40.1 Test Pyramid](#401-test-pyramid)
+- [41. DevOps & Deployment (Cross-Team)](#41-devops--deployment-cross-team)
+  - [41.1 Environment Matrix](#411-environment-matrix)
+
+### Part VII — Appendices
+- [42. References & Linked Documents](#42-references--linked-documents)
 
 <div style="page-break-before: always;"></div>
 
