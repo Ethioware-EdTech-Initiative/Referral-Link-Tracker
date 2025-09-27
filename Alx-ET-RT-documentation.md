@@ -941,6 +941,8 @@ web/
 | **Week 10** | **Stabilization & Launch Preparation** | - Run end-to-end tests across services - Perform deployment validation  - Archive reports (coverage, load testing, monitoring) - Prepare final deliverables              |
 
 
+---
+
 ## **Part IV — Shared API Specification**
 
 ### 23. API Standards & Guidelines
