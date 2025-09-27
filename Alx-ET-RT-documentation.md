@@ -1,95 +1,141 @@
 [![Preview](https://i.ibb.co/4R4kKyfn/1721195531703.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
+### **Table of Contents**
 
-# Table of Contents
+**0. Document Metadata**
+    0.1 Project Title
+    0.2 Version & Date
+    0.3 Document Owner & Contributors
+    0.4 Revision History
 
-## 0.2 Version & Date  
-## 0.3 Document Owner & Contributors  
+**Part I — General Overview**
+1. Executive Summary
+    1.1 Business Context & Problem Statement
+    1.2 Project Objectives & Success Criteria
+    1.3 Scope
+    1.4 High-Level Solution Overview
+2. Stakeholders & Governance
+    2.1 Stakeholder Map
+    2.2 Roles & Responsibilities (RBAC Overview)
+    2.3 Decision-Making & Change Management Process
+    2.4 RACI Chart
+3. Business Requirements
+    3.1 Functional Requirements
+    3.2 KPIs & Measurement Plan
+        - Core KPIs
+        - Measurement Approach
+    3.3 Non-Functional Requirements
+4. Product & UX Overview
+    4.1 Primary User Flows
+    4.2 Key Screens
+    4.3 Accessibility & Internationalization Guidelines
+5. System Architecture (End-to-End)
+    5.1 Context Diagram & Data Flow
+    5.2 High-Level Components
+    5.3 Deployment Topology & Environment Segregation
 
+**Part II — Frontend Documentation (Next.js)**
+6. Tech Stack & Key Design Decisions
+    6.1 Core Technologies
+    6.2 Critical Architecture Choices
+    6.3 Route Protection Matrix
+    6.4 Login Sequence
+    6.5 Session Maintenance
+    6.6 Fetching Patterns
+    6.7 Error Handling
+    6.8 Link Generation
+    6.9 Attribution Tracking
+    6.10 Core Protocols
+    6.11 Data Privacy
+    6.12 Validation Layers
+7. Architecture & Folder Structure
+8. Authentication Flow
+9. Data Handling Strategy
+10. Key Functional Modules
+11. Security Implementation
+12. Testing Approach
+13. Implementation Timeline
+14. Handover Notes
 
-# Part I — General Overview  
+**Part III — Backend Documentation (Django/DRF)**
+15. Tech Stack & Service Overview
+    15.1 Django REST Framework & Supporting Services
+    15.2 Justification for Tech Choices
+16. Modular Django Apps Structure
+17. Models & Database Schema
+18. Core Functional Flows
+    18.1 Referral Code Creation Process
+    18.2 Click Tracking Flow
+    18.3 Signup Tracking Flow
+    18.4 Data Aggregation & Export Flow
+19. Authentication & Authorization
+    19.1 JWT Authentication
+    19.2 DRF Permission Classes
+    19.3 Role-Based Access
+20. Performance Optimization & Caching
+    20.1 Redis Caching Strategy
+21. Background Tasks & Scheduling
+    21.1 Celery Worker Setup
+    21.2 Export Job Flow
+    21.3 Retry & Error Handling Policies
+    21.4 Monitoring & Visibility
+22. Error Handling
+    22.1 Centralized Exception Handling
+23. API Documentation Generation
+    23.1 django-spectacular Setup
+    23.2 API Consistency
+24. Testing & Quality Assurance
+    24.1 Unit & Integration Testing
+    24.2 Performance & Load Testing
+    24.3 Background Worker Reliability
+    24.4 Deployment & Server Validation
+    24.5 Reporting & Artifacts
+25. Execution Plan by Phases (Backend)
 
-1. Executive Summary  
-2. Stakeholders & Governance  
-3. Business Requirements  
-   - 3.1 Functional Requirements  
-   - 3.2 KPIs & Measurement Plan  
-     - Core KPIs  
-     - Measurement Approach  
-   - 3.3 Non-Functional Requirements  
-4. Product & UX Overview  
-   - 4.1 Primary User Flows  
-   - 4.2 Key Screens  
-   - 4.3 Accessibility & Internationalization Guidelines  
-5. System Architecture (End-to-End)  
-   - 5.1 Context Diagram & Data Flow  
-   - 5.2 High-Level Components  
+**Part IV — Shared API Specification**
+26. API Standards & Guidelines
+27. Authentication & Session Flow
+28. RBAC in APIs
+29. Endpoint Catalog (High-Level)
+30. Tracking API Details
+31. API Performance & Limits
 
+**Part V — Data & Analytics Documentation**
+32. Metrics Catalog & KPI Definitions
+    32.1 Core Performance Metrics
+    32.2 Conversion & Efficiency KPIs
+    32.3 Officer & Campaign KPIs
+    32.4 Time-Based KPIs
+    32.5 Security & Fraud KPIs
+33. Data Models & Event Schema
+    33.1 Click Event Schema
+    33.2 Signup Event Schema
+34. Dashboards
+    34.1 Admin Dashboard
+    34.2 Officer Dashboard
+35. Advanced Insights & Analysis
+    35.1 Cross-Campaign Officer Performance
+    35.2 Conversion Time Distribution
+    35.3 Fraud Risk Analysis
+36. Reporting & Exports
+    36.1 Google Sheets Structure
+    36.2 Automation Schedule
+37. Data Governance & Quality
+    37.1 Validation Rules
 
+**Part VI — Operations & Maintenance**
+38. Security, Privacy & Compliance
+    38.1 Threat Model & Risks
+    38.2 Security Controls
+39. Performance & Reliability
+    39.1 Load Testing
+40. Testing & Quality Assurance (Cross-Team)
+    40.1 Test Pyramid
+41. DevOps & Deployment (Cross-Team)
+    41.1 Environment Matrix
 
-# Part II — Frontend Documentation (Next.js)
-
-6. Tech Stack & Key Design Decisions  
-   - 6.1 Core Technologies  
-   - 6.2 Critical Architecture Choices  
-   - 6.3 Route Protection Matrix  
-   - 6.4 Login Sequence  
-   - 6.5 Session Maintenance  
-   - 6.6 Fetching Patterns  
-   - 6.7 Error Handling  
-   - 6.8 Link Generation  
-   - 6.9 Attribution Tracking  
-   - 6.10 Core Protocols  
-   - 6.11 Data Privacy  
-   - 6.12 Validation Layers  
-
-
-
-# Part III — Backend Documentation (Django/DRF)
-
-7. Tech Stack & Service Overview  
-8. Modular Django Apps Structure  
-9. Models & Database Schema  
-10. Core Functional Flows  
-11. Performance Optimization & Caching  
-12. Background Tasks & Scheduling  
-13. Error Handling  
-14. API Documentation Generation  
-15. Execution Plan by Phases (Backend)  
-
-
-
-# Part IV — Shared API Specification
-
-16. API Standards & Guidelines  
-17. Authentication & Session Flow  
-18. RBAC in APIs  
-19. Endpoint Catalog (High-Level)  
-20. Tracking API Details  
-21. API Performance & Limits  
-
-
-# Part V — Data & Analytics Documentation
-
-22. Metrics Catalog & KPI Definitions  
-23. Data Models & Event Schema  
-24. Dashboards  
-25. Advanced Insights & Analysis  
-26. Reporting & Exports  
-27. Data Governance & Quality  
-
-
-
-# Part VI — Operations & Maintenance
-
-29. Security, Privacy & Compliance  
-30. Performance & Reliability  
-31. Testing & Quality Assurance (Cross-Team)  
-32. DevOps & Deployment (Cross-Team)  
-
-
-
-# Part VII — Appendices
+**Part VII — Appendices**
+42. References & Linked Documents
 
 <div style="page-break-before: always;"></div>
 
@@ -119,7 +165,8 @@
 | Version | Date      | Author / Editor | Changes Made                        |
 | ------- | --------- | --------------- | ----------------------------------- |
 | 1.0     | 8/15/2025 | NAHOM MERGA     | Initial unified documentation draft |
-| 1.1     |           |                 |                                     |
+| 1.1     | 9/27/2025 | NAHOM MERGA     | updated backend  section            |
+|         |           |                 |                                     |
 
 ## **Part I — General Overview**
 
@@ -1159,4 +1206,3 @@ web/
 - https://docs.google.com/document/d/1aTSfJUKs8-5z5GNj87hEsMp6YZVnjccXgBQP05XaZBY/edit?tab=t.0
 - https://t.me/c/2148887449/2095/2688
 - https://t.me/c/2148887449/2095/2689
-
