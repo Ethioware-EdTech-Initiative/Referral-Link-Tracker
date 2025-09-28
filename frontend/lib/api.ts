@@ -543,7 +543,13 @@ class ApiClient {
     })
   }
 
-  // Note: Link update not available in backend - links are read-only after creation
+  // Tentative link update method - testing if backend supports it
+  async updateLink(id: string, linkData: { is_active?: boolean; revoke_at?: string | null }): Promise<ApiResponse<any>> {
+    return this.request(`/alxET-rt-api/admin/admin-dash/links/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(linkData),
+    })
+  }
 
   async deleteLink(id: string): Promise<ApiResponse> {
     return this.request(`/alxET-rt-api/admin/admin-dash/links/${id}/`, {
