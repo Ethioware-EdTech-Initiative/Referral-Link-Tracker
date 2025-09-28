@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useAuth } from "@/contexts/auth-context"
+import { TokenManager } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
@@ -29,15 +30,28 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
       if (requiredRole && role !== requiredRole) {
         console.log("[v0] ProtectedRoute - Role mismatch. Required:", requiredRole, "Actual:", role)
-        // Instead, show unauthorized message or redirect to appropriate dashboard
-        if (role === "admin") {
-          console.log("[v0] ProtectedRoute - Admin trying to access officer route, redirecting to admin")
-          router.push("/admin")
-        } else if (role === "officer") {
-          console.log("[v0] ProtectedRoute - Officer trying to access admin route, redirecting to officer")
-          router.push("/officer")
+        
+        // Additional token validation to prevent stale role issues
+        const accessToken = TokenManager.getAccessToken()
+        if (accessToken && !TokenManager.isTokenExpired(accessToken)) {
+          const tokenRole = TokenManager.getUserRole(accessToken)
+          console.log("[v0] ProtectedRoute - Token role verification:", tokenRole)
+          
+          // Use token-based role if there's a mismatch
+          const actualRole = tokenRole || role
+          
+          if (actualRole === "admin") {
+            console.log("[v0] ProtectedRoute - Redirecting to admin dashboard")
+            router.push("/admin")
+          } else if (actualRole === "officer") {
+            console.log("[v0] ProtectedRoute - Redirecting to officer dashboard")  
+            router.push("/officer")
+          } else {
+            console.log("[v0] ProtectedRoute - Unknown role, redirecting to login")
+            router.push("/login")
+          }
         } else {
-          console.log("[v0] ProtectedRoute - Unknown role, redirecting to login")
+          console.log("[v0] ProtectedRoute - Invalid token, redirecting to login")
           router.push("/login")
         }
         return

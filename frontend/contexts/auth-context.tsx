@@ -30,9 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   console.log("[v0] Auth state:", { user, isAuthenticated, role, isLoading })
 
   const checkAuthStatus = useCallback(async () => {
-    if (hasCheckedAuthRef.current) return
-
-    console.log("[v0] Checking auth status...")
+    console.log("[v0] Checking auth status..., hasChecked:", hasCheckedAuthRef.current)
 
     try {
       const accessToken = TokenManager.getAccessToken()
@@ -58,21 +56,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               access: data.access,
               refresh: refreshToken,
             })
-            await loadUserFromToken(data.access)
+            const userFromToken = TokenManager.getUserFromToken(data.access)
+            if (userFromToken) {
+              console.log("[v0] Setting refreshed user data:", userFromToken)
+              setUser(userFromToken)
+            }
           } else {
             console.log("[v0] Token refresh failed")
-            TokenManager.clearTokens()
+            TokenManager.removeTokens()
+            setUser(null)
           }
         } else {
           console.log("[v0] No refresh token available")
+          TokenManager.removeTokens()
+          setUser(null)
         }
       } else {
-        console.log("[v0] Loading user from existing token...")
-        await loadUserFromToken(accessToken)
+        // First, try to get stored user data (includes complete role information)
+        const storedUserData = TokenManager.getUserData()
+        if (storedUserData) {
+          console.log("[v0] Loading user from stored data:", storedUserData)
+          setUser(storedUserData)
+          const userRole = storedUserData.is_staff ? "admin" : "officer"
+          console.log("[v0] User role from stored data:", userRole, "is_staff:", storedUserData.is_staff)
+        } else {
+          console.log("[v0] No stored user data, trying token (may lack role info)...")
+          const userFromToken = TokenManager.getUserFromToken(accessToken)
+          if (userFromToken) {
+            console.log("[v0] Setting user data from valid token:", userFromToken)
+            console.log("[v0] User role from token:", userFromToken.is_staff ? "admin" : "officer")
+            
+            // Validate that the token role matches what we expect
+            const tokenRole = TokenManager.getUserRole(accessToken)
+            console.log("[v0] Direct token role verification:", tokenRole)
+            
+            setUser(userFromToken)
+          } else {
+            console.log("[v0] Invalid token, clearing...")
+            TokenManager.removeTokens()
+            TokenManager.removeUserData()
+            setUser(null)
+          }
+        }
       }
     } catch (error) {
       console.error("[v0] Auth check failed:", error)
-      TokenManager.clearTokens()
+      TokenManager.removeTokens()
+      setUser(null)
     } finally {
       setIsLoading(false)
       hasCheckedAuthRef.current = true
@@ -80,33 +110,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // Reset auth check flag on mount to ensure fresh validation
+    hasCheckedAuthRef.current = false
     checkAuthStatus()
   }, [checkAuthStatus])
 
-  const loadUserFromToken = async (token: string) => {
-    const decoded = TokenManager.decodeToken(token)
-    console.log("[v0] Decoded token:", decoded)
 
-    if (decoded) {
-      const userData: User = {
-        id: decoded.user_id,
-        email: decoded.email || "",
-        full_name: decoded.full_name || "",
-        is_staff: decoded.is_staff || false,
-        must_change_password: decoded.must_change_password || false,
-        is_active: true,
-        date_joined: new Date().toISOString(),
-      }
-      console.log("[v0] Setting user data:", userData)
-      console.log("[v0] User is_staff:", userData.is_staff)
-      setUser(userData)
-    }
-  }
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true)
       console.log("[v0] Attempting login for:", email)
+      
+      // Clear any existing tokens to prevent confusion
+      console.log("[v0] Clearing existing tokens before login")
+      TokenManager.removeTokens()
+      TokenManager.removeUserData()
+      setUser(null)
+      hasCheckedAuthRef.current = false
 
       const response = await apiClient.login(email, password)
 
@@ -117,36 +138,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.data) {
         console.log("[v0] Login response data:", response.data)
 
-        if (response.data.tokens?.access && response.data.tokens?.refresh) {
-          console.log("[v0] Tokens found in nested tokens object")
-          TokenManager.setTokens({
-            access: response.data.tokens.access,
-            refresh: response.data.tokens.refresh,
-          })
+        // Handle different possible response formats
+        let tokens: { access: string; refresh: string } | null = null
+        let userInfo: any = null
 
-          if (response.data.user) {
-            console.log("[v0] Setting user data from response:", response.data.user)
-            setUser(response.data.user)
+        // Cast to any to handle different response formats flexibly
+        const responseData = response.data as any
+
+        // Check for direct token format (current expected format)
+        if (responseData.access && responseData.refresh) {
+          console.log("[v0] Tokens found in direct format")
+          tokens = {
+            access: responseData.access,
+            refresh: responseData.refresh,
+          }
+          userInfo = responseData
+        }
+        // Check for nested tokens format
+        else if (responseData.tokens?.access && responseData.tokens?.refresh) {
+          console.log("[v0] Tokens found in nested format")
+          tokens = {
+            access: responseData.tokens.access,
+            refresh: responseData.tokens.refresh,
+          }
+          userInfo = responseData.user || responseData
+        }
+        // Check for other possible formats (token, user separate)
+        else if (responseData.token) {
+          console.log("[v0] Single token found, checking format")
+          // Some APIs return a single JWT token
+          tokens = {
+            access: responseData.token,
+            refresh: responseData.refresh_token || responseData.token, // fallback
+          }
+          userInfo = responseData
+        }
+
+        if (tokens) {
+          console.log("[v0] Setting tokens:", { hasAccess: !!tokens.access, hasRefresh: !!tokens.refresh })
+          
+          // Validate token content before storing
+          const preValidation = TokenManager.decodeToken(tokens.access)
+          console.log("[v0] Pre-storage token validation:", preValidation)
+          console.log("[v0] Pre-storage is_staff value:", preValidation?.is_staff)
+          
+          TokenManager.setTokens(tokens)
+
+          // Create user data - try from userInfo first, then extract from token
+          let userData: User | null = null
+
+          if (userInfo && userInfo.id && userInfo.email) {
+            userData = {
+              id: userInfo.id,
+              email: userInfo.email,
+              full_name: userInfo.full_name || "",
+              is_staff: userInfo.is_staff || false,
+              must_change_password: userInfo.must_change_password || false,
+              is_active: true,
+              date_joined: new Date().toISOString(),
+            }
           } else {
-            // Fallback to loading from token if user data not in response
-            await loadUserFromToken(response.data.tokens.access)
+            // Fallback to extracting from token
+            userData = TokenManager.getUserFromToken(tokens.access)
           }
 
-          const userRole = response.data.user?.is_staff ? "admin" : "officer"
-          console.log("[v0] User role from response:", userRole)
+          if (userData) {
+            console.log("[v0] Setting user data:", userData)
+            
+            // Store complete user data in localStorage for persistence across page refreshes
+            TokenManager.setUserData(userData)
+            
+            setUser(userData)
 
-          if (userRole === "admin") {
-            console.log("[v0] Redirecting to admin dashboard")
-            router.push("/admin")
+            const userRole = userData.is_staff ? "admin" : "officer"
+            console.log("[v0] User role determined:", userRole, "is_staff:", userData.is_staff)
+
+            if (userRole === "admin") {
+              console.log("[v0] Redirecting to admin dashboard")
+              router.push("/admin")
+            } else {
+              console.log("[v0] Redirecting to officer dashboard")
+              router.push("/officer")
+            }
+
+            return { success: true }
           } else {
-            console.log("[v0] Redirecting to officer dashboard")
-            router.push("/officer")
+            return {
+              success: false,
+              error: "Unable to extract user information from login response",
+            }
           }
-
-          return { success: true }
         } else {
-          console.log("[v0] No tokens in response, checking if backend returned different format")
+          console.log("[v0] No tokens found in any expected format")
           console.log("[v0] Available keys in response.data:", Object.keys(response.data))
+          console.log("[v0] Full response.data structure:", response.data)
 
           return {
             success: false,
@@ -177,7 +262,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Logout error:", error)
     } finally {
-      TokenManager.clearTokens()
+      TokenManager.removeTokens()
+      TokenManager.removeUserData()
       setUser(null)
       hasCheckedAuthRef.current = false
       router.push("/login")
@@ -185,7 +271,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const refreshUser = async () => {
+    console.log("[v0] Refreshing user data...")
     hasCheckedAuthRef.current = false
+    setIsLoading(true)
     await checkAuthStatus()
   }
 

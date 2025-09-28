@@ -18,7 +18,9 @@ export interface AuthTokens {
 export interface DecodedToken {
   user_id: string
   email: string
+  full_name?: string
   is_staff: boolean
+  must_change_password?: boolean
   exp: number
   iat: number
 }
@@ -64,11 +66,35 @@ export class TokenManager {
     return null
   }
 
-  static clearTokens(): void {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(REFRESH_KEY)
+  static removeTokens(): void {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+  }
+
+  // User data storage methods
+  static setUserData(user: User): void {
+    localStorage.setItem('user_data', JSON.stringify(user))
+    console.log('[v0] TokenManager - Stored user data:', user)
+  }
+
+  static getUserData(): User | null {
+    const userData = localStorage.getItem('user_data')
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData)
+        console.log('[v0] TokenManager - Retrieved user data:', parsed)
+        return parsed
+      } catch (error) {
+        console.error('[v0] TokenManager - Error parsing user data:', error)
+        localStorage.removeItem('user_data')
+        return null
+      }
     }
+    return null
+  }
+
+  static removeUserData(): void {
+    localStorage.removeItem('user_data')
   }
 
   static isTokenExpired(token: string): boolean {
@@ -92,5 +118,43 @@ export class TokenManager {
     const decoded = this.decodeToken(token)
     if (!decoded) return null
     return decoded.is_staff ? "admin" : "officer"
+  }
+
+  static validateTokenAndRole(expectedRole?: "admin" | "officer"): boolean {
+    const token = this.getAccessToken()
+    if (!token || this.isTokenExpired(token)) return false
+    
+    if (expectedRole) {
+      const userRole = this.getUserRole(token)
+      return userRole === expectedRole
+    }
+    
+    return true
+  }
+
+  static getUserFromToken(token: string): User | null {
+    const decoded = this.decodeToken(token)
+    if (!decoded) return null
+    
+    console.log("[v0] TokenManager - Decoding token for user data:")
+    console.log("[v0] TokenManager - Raw decoded token:", decoded)
+    console.log("[v0] TokenManager - is_staff from token:", decoded.is_staff)
+    console.log("[v0] TokenManager - typeof is_staff:", typeof decoded.is_staff)
+    
+    // Handle different possible formats for is_staff (boolean, string, or number)
+    const rawIsStaff = (decoded as any).is_staff
+    const isStaff = rawIsStaff === true || rawIsStaff === "true" || rawIsStaff === 1 || rawIsStaff === "1"
+    console.log("[v0] TokenManager - Raw is_staff value:", rawIsStaff)
+    console.log("[v0] TokenManager - Computed is_staff:", isStaff)
+    
+    return {
+      id: decoded.user_id,
+      email: decoded.email || "",
+      full_name: decoded.full_name || "",
+      is_staff: isStaff,
+      must_change_password: decoded.must_change_password || false,
+      is_active: true,
+      date_joined: new Date().toISOString(),
+    }
   }
 }
