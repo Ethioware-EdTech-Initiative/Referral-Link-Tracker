@@ -1,6 +1,6 @@
 import { TokenManager } from "./auth"
 
-const BASE_URL = "https://referral-link-tracker.vercel.app"
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://referral-link-tracker.vercel.app"
 
 export interface ApiResponse<T = any> {
   data?: T
@@ -42,25 +42,34 @@ class ApiClient {
         headers,
       })
 
-      // Handle token refresh for 401 errors
-      if (response.status === 401 && accessToken) {
+      // Handle token refresh for 401 errors (but not for auth endpoints to prevent loops)
+      if (response.status === 401 && accessToken && !endpoint.includes('/auth/')) {
+        console.log("[v0] Received 401, attempting token refresh for:", endpoint)
         const refreshed = await this.refreshToken()
         if (refreshed) {
           // Retry the original request with new token
-          headers.Authorization = `Bearer ${TokenManager.getAccessToken()}`
-          const retryResponse = await fetch(url, {
-            ...options,
-            headers,
-          })
+          const newToken = TokenManager.getAccessToken()
+          if (newToken) {
+            headers.Authorization = `Bearer ${newToken}`
+            console.log("[v0] Retrying request with refreshed token")
+            const retryResponse = await fetch(url, {
+              ...options,
+              headers,
+            })
 
-          if (retryResponse.ok) {
-            // Handle 204 No Content responses (no body to parse)
-            if (retryResponse.status === 204) {
-              return { data: undefined, status: retryResponse.status }
+            if (retryResponse.ok) {
+              // Handle 204 No Content responses (no body to parse)
+              if (retryResponse.status === 204) {
+                return { data: undefined, status: retryResponse.status }
+              }
+              const data = await retryResponse.json()
+              return { data, status: retryResponse.status }
+            } else {
+              console.log("[v0] Retry request also failed:", retryResponse.status)
             }
-            const data = await retryResponse.json()
-            return { data, status: retryResponse.status }
           }
+        } else {
+          console.log("[v0] Token refresh failed, user needs to re-login")
         }
       }
 
@@ -88,8 +97,12 @@ class ApiClient {
 
   private async refreshToken(): Promise<boolean> {
     const refreshToken = TokenManager.getRefreshToken()
-    if (!refreshToken) return false
+    if (!refreshToken) {
+      console.log("[v0] No refresh token available for refresh")
+      return false
+    }
 
+    console.log("[v0] Attempting token refresh...")
     try {
       const response = await fetch(`${this.baseURL}/alxET-rt-api/auth/token/refresh/`, {
         method: "POST",
@@ -97,20 +110,28 @@ class ApiClient {
         body: JSON.stringify({ refresh: refreshToken }),
       })
 
+      console.log("[v0] Refresh response status:", response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log("[v0] Token refresh successful")
         TokenManager.setTokens({
           access: data.access,
-          refresh: refreshToken,
+          refresh: data.refresh || refreshToken, // Use new refresh token if provided, otherwise keep current
         })
         return true
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error("[v0] Token refresh failed:", response.status, errorData)
       }
     } catch (error) {
-      console.error("Token refresh failed:", error)
+      console.error("[v0] Token refresh network error:", error)
     }
 
     // Clear tokens if refresh fails
+    console.log("[v0] Clearing tokens due to refresh failure")
     TokenManager.removeTokens()
+    TokenManager.removeUserData()
     return false
   }
 
@@ -151,6 +172,39 @@ class ApiClient {
   async getUsers(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {
     const params = page ? `?page=${page}` : ""
     return this.request<PaginatedResponse<any>>(`/alxET-rt-api/auth/users/${params}`)
+  }
+
+  async getAllUsers(): Promise<ApiResponse<any[]>> {
+    try {
+      // Get all users by fetching multiple pages
+      let allUsers: any[] = []
+      let page = 1
+      let hasMore = true
+
+      while (hasMore) {
+        const response = await this.request<PaginatedResponse<any>>(`/alxET-rt-api/auth/users/?page=${page}`)
+        if (response.error) {
+          return {
+            error: response.error,
+            status: response.status
+          }
+        }
+
+        allUsers = [...allUsers, ...(response.data?.results || [])]
+        hasMore = !!response.data?.next
+        page++
+      }
+
+      return {
+        data: allUsers,
+        status: 200
+      }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Failed to fetch all users",
+        status: 500
+      }
+    }
   }
 
   async getUserStats(): Promise<ApiResponse<{

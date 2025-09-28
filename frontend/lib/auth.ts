@@ -67,8 +67,10 @@ export class TokenManager {
   }
 
   static removeTokens(): void {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(REFRESH_KEY)
+    }
   }
 
   // User data storage methods

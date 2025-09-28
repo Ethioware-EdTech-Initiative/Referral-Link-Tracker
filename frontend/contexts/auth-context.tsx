@@ -41,34 +41,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const refreshToken = TokenManager.getRefreshToken()
         if (refreshToken) {
           console.log("[v0] Attempting token refresh...")
-          const refreshResponse = await fetch(
-            "https://referral-link-tracker.vercel.app/alxET-rt-api/auth/token/refresh/",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ refresh: refreshToken }),
-            },
-          )
+          try {
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://referral-link-tracker.vercel.app"
+            const refreshResponse = await fetch(
+              `${baseUrl}/alxET-rt-api/auth/token/refresh/`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh: refreshToken }),
+              },
+            )
 
-          if (refreshResponse.ok) {
-            const data = await refreshResponse.json()
-            TokenManager.setTokens({
-              access: data.access,
-              refresh: refreshToken,
-            })
-            const userFromToken = TokenManager.getUserFromToken(data.access)
-            if (userFromToken) {
-              console.log("[v0] Setting refreshed user data:", userFromToken)
-              setUser(userFromToken)
+            console.log("[v0] Token refresh response status:", refreshResponse.status)
+
+            if (refreshResponse.ok) {
+              const data = await refreshResponse.json()
+              console.log("[v0] Token refresh successful, setting new tokens")
+              TokenManager.setTokens({
+                access: data.access,
+                refresh: data.refresh || refreshToken,
+              })
+
+              // Try to get user from stored data first, then from token
+              const storedUserData = TokenManager.getUserData()
+              if (storedUserData) {
+                console.log("[v0] Using stored user data after refresh:", storedUserData)
+                setUser(storedUserData)
+              } else {
+                const userFromToken = TokenManager.getUserFromToken(data.access)
+                if (userFromToken) {
+                  console.log("[v0] Setting refreshed user data from token:", userFromToken)
+                  TokenManager.setUserData(userFromToken)
+                  setUser(userFromToken)
+                }
+              }
+            } else {
+              const errorData = await refreshResponse.json().catch(() => ({}))
+              console.log("[v0] Token refresh failed:", refreshResponse.status, errorData)
+              TokenManager.removeTokens()
+              TokenManager.removeUserData()
+              setUser(null)
             }
-          } else {
-            console.log("[v0] Token refresh failed")
+          } catch (refreshError) {
+            console.error("[v0] Token refresh network error:", refreshError)
             TokenManager.removeTokens()
+            TokenManager.removeUserData()
             setUser(null)
           }
         } else {
           console.log("[v0] No refresh token available")
           TokenManager.removeTokens()
+          TokenManager.removeUserData()
           setUser(null)
         }
       } else {
@@ -134,6 +157,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("[v0] Full login response:", response)
       console.log("[v0] Response data:", response.data)
       console.log("[v0] Response status:", response.status)
+
+      if (response.status === 401) {
+        console.log("[v0] Login failed: Invalid credentials")
+        return {
+          success: false,
+          error: "Invalid email or password",
+        }
+      }
 
       if (response.data) {
         console.log("[v0] Login response data:", response.data)

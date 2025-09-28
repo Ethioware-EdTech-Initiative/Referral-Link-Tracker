@@ -358,3 +358,8 @@ export const useUserStats = () => {
 
   return { data, error, isLoading, refetch: fetchStats }
 }
+
+export function useAllUsers() {
+  const apiCall = useCallback(() => apiClient.getAllUsers(), [])
+  return useApi(apiCall, [])
+}

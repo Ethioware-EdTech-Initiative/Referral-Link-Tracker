@@ -16,15 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
-import { useUsers, useUserStats } from "@/hooks/use-api"
+import { useAllUsers, useUserStats } from "@/hooks/use-api"
 import { useCreateUser, useUpdateUser, useDeleteUser } from "@/hooks/use-mutations"
 import { formatDate } from "@/lib/api-utils"
 import { Users, Search, Plus, Edit, Trash2, Shield, User, Calendar, Mail } from "lucide-react"
@@ -35,19 +27,13 @@ export function AdminUsersPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
   const [deletingUser, setDeletingUser] = useState<any>(null)
-  const [currentPage, setCurrentPage] = useState(1)
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
 
-  const { data: users, loading, error, refetch, totalCount, hasNext, hasPrevious } = useUsers(currentPage)
+  const { data: users, loading, error, refetch } = useAllUsers()
   const { data: userStats, refetch: refetchStats } = useUserStats()
   const createUserMutation = useCreateUser()
   const updateUserMutation = useUpdateUser()
   const deleteUserMutation = useDeleteUser()
-
-  // Reset to page 1 when creating or deleting users to see the changes
-  const resetToFirstPage = () => {
-    if (currentPage !== 1) setCurrentPage(1)
-  }
 
   const [newUser, setNewUser] = useState({
     email: "",
@@ -89,7 +75,6 @@ export function AdminUsersPage() {
       setIsCreateDialogOpen(false)
       setNewUser({ email: "", full_name: "", password: "", is_staff: false })
       setFormErrors({})
-      resetToFirstPage()
       refetch()
       refetchStats()
     } else {
@@ -116,7 +101,6 @@ export function AdminUsersPage() {
     const result = await deleteUserMutation.mutate(deletingUser.id)
     if (result.success) {
       setDeletingUser(null)
-      resetToFirstPage()
       refetch()
       refetchStats()
     }
@@ -253,7 +237,7 @@ export function AdminUsersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                <p className="text-2xl font-bold">{userStats?.total_users || totalCount || 0}</p>
+                <p className="text-2xl font-bold">{userStats?.total_users || users?.length || 0}</p>
               </div>
               <Users className="h-8 w-8 text-blue-600" />
             </div>
@@ -333,7 +317,9 @@ export function AdminUsersPage() {
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>
-            {filteredUsers?.length || 0} of {totalCount || 0} users
+            {searchTerm || filterRole !== "all"
+              ? `${filteredUsers?.length || 0} of ${users?.length || 0} users`
+              : `${users?.length || 0} users`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -414,65 +400,7 @@ export function AdminUsersPage() {
             </div>
           )}
 
-          {/* Pagination Controls */}
-          {totalCount > 0 && (
-            <div className="flex justify-center mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (hasPrevious) setCurrentPage(prev => prev - 1)
-                      }}
-                      disabled={!hasPrevious}
-                      className="flex items-center gap-1"
-                    >
-                      <span>← Previous</span>
-                    </Button>
-                  </PaginationItem>
 
-                  {/* Page numbers */}
-                  {Array.from({ length: Math.min(5, Math.ceil((totalCount || 0) / 20)) }, (_, i) => {
-                    const startPage = Math.max(1, currentPage - 2);
-                    const pageNum = startPage + i;
-                    const totalPages = Math.ceil((totalCount || 0) / 20);
-
-                    if (pageNum <= totalPages) {
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <Button
-                            variant={pageNum === currentPage ? "default" : "ghost"}
-                            size="sm"
-                            onClick={() => setCurrentPage(pageNum)}
-                            className="min-w-[40px]"
-                          >
-                            {pageNum}
-                          </Button>
-                        </PaginationItem>
-                      );
-                    }
-                    return null;
-                  })}
-
-                  <PaginationItem>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (hasNext) setCurrentPage(prev => prev + 1)
-                      }}
-                      disabled={!hasNext}
-                      className="flex items-center gap-1"
-                    >
-                      <span>Next →</span>
-                    </Button>
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </CardContent>
       </Card>
 
