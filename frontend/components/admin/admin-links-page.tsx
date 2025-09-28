@@ -81,7 +81,7 @@ export function AdminLinksPage() {
   })
 
   const updateMutation = useUpdateMutation(
-    (data: { id: string; [key: string]: any }) => apiClient.updateLink(data.id, { is_active: data.is_active, revoke_at: data.revoke_at }),
+    (data: { id: string;[key: string]: any }) => apiClient.updateLink(data.id, { is_active: data.is_active, revoke_at: data.revoke_at }),
     {
       onSuccess: () => {
         refetch()
@@ -268,13 +268,13 @@ export function AdminLinksPage() {
                   <AlertDescription>{formErrors.general}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="officer">
                   Officer <span className="text-red-500">*</span>
                 </Label>
-                <Select 
-                  value={newLink.officer} 
+                <Select
+                  value={newLink.officer}
                   onValueChange={(value) => {
                     setNewLink({ ...newLink, officer: value })
                     if (formErrors.officer) {
@@ -302,8 +302,8 @@ export function AdminLinksPage() {
                 <Label htmlFor="campaign">
                   Campaign <span className="text-red-500">*</span>
                 </Label>
-                <Select 
-                  value={newLink.campaign} 
+                <Select
+                  value={newLink.campaign}
                   onValueChange={(value) => {
                     setNewLink({ ...newLink, campaign: value })
                     if (formErrors.campaign) {
@@ -392,14 +392,14 @@ export function AdminLinksPage() {
                 All generated referral links with performance metrics
               </CardDescription>
             </div>
-            
+
             {selectedLinks.size > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
                   {selectedLinks.size} selected
                 </span>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => handleBulkToggleStatus(true)}
                   className="text-green-600"
@@ -407,8 +407,8 @@ export function AdminLinksPage() {
                   <Power className="h-4 w-4 mr-1" />
                   Activate
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => handleBulkToggleStatus(false)}
                   className="text-orange-600"
@@ -416,8 +416,8 @@ export function AdminLinksPage() {
                   <Power className="h-4 w-4 mr-1" />
                   Deactivate
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleBulkDelete}
                   className="text-red-600"
@@ -546,25 +546,25 @@ export function AdminLinksPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setViewingLink(link)}
                             className="h-8 w-8 p-0"
                           >
                             <Eye className="h-3 w-3" />
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setEditingLink({ ...link })}
                             className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           >
                             <Edit className="h-3 w-3" />
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setDeletingLink(link)}
                             className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
@@ -602,17 +602,17 @@ export function AdminLinksPage() {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Reference Code</Label>
                 <Input value={viewingLink.ref_code} readOnly className="bg-muted font-mono" />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Officer</Label>
                 <Input value={`${viewingLink.officer?.full_name} (${viewingLink.officer?.email})`} readOnly className="bg-muted" />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Campaign</Label>
                 <Input value={viewingLink.campaign?.name || 'N/A'} readOnly className="bg-muted" />
@@ -628,7 +628,7 @@ export function AdminLinksPage() {
                   <Input value={viewingLink.signup_count || 0} readOnly className="bg-muted" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Status</Label>
                 <div className="pt-1">
@@ -637,7 +637,7 @@ export function AdminLinksPage() {
                   </Badge>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Created</Label>
@@ -692,22 +692,22 @@ export function AdminLinksPage() {
                   <AlertDescription>{formErrors.general}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label>Full Link (Read-only)</Label>
                 <Input value={editingLink.full_link} readOnly className="bg-muted" />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Reference Code (Read-only)</Label>
                 <Input value={editingLink.ref_code} readOnly className="bg-muted font-mono" />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Officer (Read-only)</Label>
                 <Input value={`${editingLink.officer?.full_name} (${editingLink.officer?.email})`} readOnly className="bg-muted" />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Campaign (Read-only)</Label>
                 <Input value={editingLink.campaign?.name || 'N/A'} readOnly className="bg-muted" />

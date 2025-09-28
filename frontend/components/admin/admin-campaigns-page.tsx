@@ -194,12 +194,12 @@ export function AdminCampaignsPage() {
       // Check if trying to modify start_date of a past campaign
       const originalStartDateObj = new Date(originalCampaign.start_date || '')
       const now = new Date()
-      
+
       if (originalCampaign.start_date && originalStartDateObj < now) {
         setFormErrors({ general: "Cannot modify start date of campaigns that have already started" })
         return
       }
-      
+
       data.start_date = editingCampaign.start_date ? new Date(editingCampaign.start_date).toISOString() : editingCampaign.start_date
     }
 
@@ -221,7 +221,7 @@ export function AdminCampaignsPage() {
     if (data.start_date && data.end_date) {
       const startDate = new Date(data.start_date)
       const endDate = new Date(data.end_date)
-      
+
       if (endDate <= startDate) {
         setFormErrors({ general: "End date must be after start date" })
         return
