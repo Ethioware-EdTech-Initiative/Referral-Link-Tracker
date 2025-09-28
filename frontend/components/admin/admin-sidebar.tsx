@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -41,8 +42,11 @@ const navigation = [
 export function AdminSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { user, logout } = useAuth()
+  const { theme } = useTheme()
   const router = useRouter()
   const pathname = usePathname()
+
+  const logoSrc = theme === 'dark' ? '/alx-logo-black variant.png' : '/alx-logo-black.png'
 
   const handleLogout = async () => {
     await logout()
@@ -68,9 +72,8 @@ export function AdminSidebar() {
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-border">
             <div className="flex items-center gap-3">
-              <img src="/alx-logo-black.png" alt="ALX Logo" className="h-8 w-auto" />
+              <img src={logoSrc} alt="ALX Logo" className="h-10 w-auto" />
               <div>
-                <h1 className="font-bold text-lg">ALX-ET</h1>
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                   <Shield className="h-3 w-3" />
                   Admin Portal

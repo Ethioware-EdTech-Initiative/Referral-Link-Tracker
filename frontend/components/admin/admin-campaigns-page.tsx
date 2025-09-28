@@ -39,7 +39,7 @@ export function AdminCampaignsPage() {
   })
 
   const updateMutation = useUpdateMutation(
-    (data: { id: string; [key: string]: any }) => apiClient.updateCampaign(data.id, data),
+    (data: { id: string;[key: string]: any }) => apiClient.updateCampaign(data.id, data),
     {
       onSuccess: () => {
         refetch()

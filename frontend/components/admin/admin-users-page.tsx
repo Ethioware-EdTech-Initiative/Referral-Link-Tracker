@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +16,15 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { useUsers } from "@/hooks/use-api"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { useUsers, useUserStats } from "@/hooks/use-api"
 import { useCreateUser, useUpdateUser, useDeleteUser } from "@/hooks/use-mutations"
 import { formatDate } from "@/lib/api-utils"
 import { Users, Search, Plus, Edit, Trash2, Shield, User, Calendar, Mail } from "lucide-react"
@@ -26,11 +34,20 @@ export function AdminUsersPage() {
   const [filterRole, setFilterRole] = useState<"all" | "admin" | "officer">("all")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
+  const [deletingUser, setDeletingUser] = useState<any>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
 
-  const { data: users, loading, error, refetch } = useUsers()
+  const { data: users, loading, error, refetch, totalCount, hasNext, hasPrevious } = useUsers(currentPage)
+  const { data: userStats, refetch: refetchStats } = useUserStats()
   const createUserMutation = useCreateUser()
   const updateUserMutation = useUpdateUser()
   const deleteUserMutation = useDeleteUser()
+
+  // Reset to page 1 when creating or deleting users to see the changes
+  const resetToFirstPage = () => {
+    if (currentPage !== 1) setCurrentPage(1)
+  }
 
   const [newUser, setNewUser] = useState({
     email: "",
@@ -49,11 +66,34 @@ export function AdminUsersPage() {
   })
 
   const handleCreateUser = async () => {
+    const errors: { [key: string]: string } = {}
+
+    // Form validation
+    if (!newUser.email) errors.email = "Email is required"
+    if (!newUser.full_name) errors.full_name = "Full name is required"
+    if (!newUser.password) errors.password = "Password is required"
+
+    if (newUser.password && newUser.password.length < 8) {
+      errors.password = "Password must be at least 8 characters long"
+    }
+
+    if (newUser.email && !newUser.email.includes("@")) {
+      errors.email = "Please enter a valid email address"
+    }
+
+    setFormErrors(errors)
+    if (Object.keys(errors).length > 0) return
+
     const result = await createUserMutation.mutate(newUser)
     if (result.success) {
       setIsCreateDialogOpen(false)
       setNewUser({ email: "", full_name: "", password: "", is_staff: false })
+      setFormErrors({})
+      resetToFirstPage()
       refetch()
+      refetchStats()
+    } else {
+      setFormErrors({ general: result.error || "Failed to create user" })
     }
   }
 
@@ -67,15 +107,18 @@ export function AdminUsersPage() {
     if (result.success) {
       setEditingUser(null)
       refetch()
+      refetchStats()
     }
   }
 
-  const handleDeleteUser = async (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      const result = await deleteUserMutation.mutate(userId)
-      if (result.success) {
-        refetch()
-      }
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return
+    const result = await deleteUserMutation.mutate(deletingUser.id)
+    if (result.success) {
+      setDeletingUser(null)
+      resetToFirstPage()
+      refetch()
+      refetchStats()
     }
   }
 
@@ -108,31 +151,76 @@ export function AdminUsersPage() {
               <DialogDescription>Add a new user to the system</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {formErrors.general && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm">
+                  {formErrors.general}
+                </div>
+              )}
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="flex items-center gap-1">
+                  Email <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, email: e.target.value })
+                    if (formErrors.email) {
+                      const newErrors = { ...formErrors }
+                      delete newErrors.email
+                      setFormErrors(newErrors)
+                    }
+                  }}
+                  className={formErrors.email ? "border-red-500" : ""}
                 />
+                {formErrors.email && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                )}
               </div>
               <div>
-                <Label htmlFor="full_name">Full Name</Label>
+                <Label htmlFor="full_name" className="flex items-center gap-1">
+                  Full Name <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="full_name"
                   value={newUser.full_name}
-                  onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, full_name: e.target.value })
+                    if (formErrors.full_name) {
+                      const newErrors = { ...formErrors }
+                      delete newErrors.full_name
+                      setFormErrors(newErrors)
+                    }
+                  }}
+                  className={formErrors.full_name ? "border-red-500" : ""}
                 />
+                {formErrors.full_name && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.full_name}</p>
+                )}
               </div>
               <div>
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="flex items-center gap-1">
+                  Password <span className="text-red-500">*</span>
+                  <span className="text-xs text-muted-foreground">(min. 8 characters)</span>
+                </Label>
                 <Input
                   id="password"
                   type="password"
                   value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, password: e.target.value })
+                    if (formErrors.password) {
+                      const newErrors = { ...formErrors }
+                      delete newErrors.password
+                      setFormErrors(newErrors)
+                    }
+                  }}
+                  className={formErrors.password ? "border-red-500" : ""}
                 />
+                {formErrors.password && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.password}</p>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
@@ -144,7 +232,10 @@ export function AdminUsersPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsCreateDialogOpen(false)
+                setFormErrors({})
+              }}>
                 Cancel
               </Button>
               <Button onClick={handleCreateUser} disabled={createUserMutation.loading}>
@@ -162,7 +253,7 @@ export function AdminUsersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                <p className="text-2xl font-bold">{users?.length || 0}</p>
+                <p className="text-2xl font-bold">{userStats?.total_users || totalCount || 0}</p>
               </div>
               <Users className="h-8 w-8 text-blue-600" />
             </div>
@@ -173,7 +264,7 @@ export function AdminUsersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Administrators</p>
-                <p className="text-2xl font-bold">{users?.filter((user) => user.is_staff).length || 0}</p>
+                <p className="text-2xl font-bold">{userStats?.total_admins || 0}</p>
               </div>
               <Shield className="h-8 w-8 text-purple-600" />
             </div>
@@ -184,7 +275,7 @@ export function AdminUsersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Officers</p>
-                <p className="text-2xl font-bold">{users?.filter((user) => !user.is_staff).length || 0}</p>
+                <p className="text-2xl font-bold">{userStats?.total_officers || 0}</p>
               </div>
               <User className="h-8 w-8 text-green-600" />
             </div>
@@ -242,7 +333,7 @@ export function AdminUsersPage() {
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>
-            {filteredUsers?.length || 0} of {users?.length || 0} users
+            {filteredUsers?.length || 0} of {totalCount || 0} users
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -300,7 +391,7 @@ export function AdminUsersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => setDeletingUser(user)}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -320,6 +411,66 @@ export function AdminUsersPage() {
                   ? "Try adjusting your search or filter criteria"
                   : "Start by creating your first user"}
               </p>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {totalCount > 0 && (
+            <div className="flex justify-center mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (hasPrevious) setCurrentPage(prev => prev - 1)
+                      }}
+                      disabled={!hasPrevious}
+                      className="flex items-center gap-1"
+                    >
+                      <span>← Previous</span>
+                    </Button>
+                  </PaginationItem>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: Math.min(5, Math.ceil((totalCount || 0) / 20)) }, (_, i) => {
+                    const startPage = Math.max(1, currentPage - 2);
+                    const pageNum = startPage + i;
+                    const totalPages = Math.ceil((totalCount || 0) / 20);
+
+                    if (pageNum <= totalPages) {
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <Button
+                            variant={pageNum === currentPage ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="min-w-[40px]"
+                          >
+                            {pageNum}
+                          </Button>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (hasNext) setCurrentPage(prev => prev + 1)
+                      }}
+                      disabled={!hasNext}
+                      className="flex items-center gap-1"
+                    >
+                      <span>Next →</span>
+                    </Button>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </CardContent>
@@ -367,6 +518,45 @@ export function AdminUsersPage() {
             </Button>
             <Button onClick={handleUpdateUser} disabled={updateUserMutation.loading}>
               {updateUserMutation.loading ? "Updating..." : "Update User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deletingUser} onOpenChange={() => setDeletingUser(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this user? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {deletingUser && (
+            <div className="py-4">
+              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                <div className="w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-destructive">
+                    {deletingUser.full_name?.charAt(0) || deletingUser.email.charAt(0)}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-medium">{deletingUser.full_name || "No name"}</p>
+                  <p className="text-sm text-muted-foreground">{deletingUser.email}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingUser(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={deleteUserMutation.loading}
+            >
+              {deleteUserMutation.loading ? "Deleting..." : "Delete User"}
             </Button>
           </DialogFooter>
         </DialogContent>

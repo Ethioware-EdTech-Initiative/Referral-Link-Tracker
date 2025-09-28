@@ -54,6 +54,10 @@ class ApiClient {
           })
 
           if (retryResponse.ok) {
+            // Handle 204 No Content responses (no body to parse)
+            if (retryResponse.status === 204) {
+              return { data: undefined, status: retryResponse.status }
+            }
             const data = await retryResponse.json()
             return { data, status: retryResponse.status }
           }
@@ -61,6 +65,10 @@ class ApiClient {
       }
 
       if (response.ok) {
+        // Handle 204 No Content responses (no body to parse)
+        if (response.status === 204) {
+          return { data: undefined, status: response.status }
+        }
         const data = await response.json()
         return { data, status: response.status }
       } else {
@@ -142,7 +150,49 @@ class ApiClient {
   // Admin endpoints
   async getUsers(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {
     const params = page ? `?page=${page}` : ""
-    return this.request(`/alxET-rt-api/auth/users/${params}`)
+    return this.request<PaginatedResponse<any>>(`/alxET-rt-api/auth/users/${params}`)
+  }
+
+  async getUserStats(): Promise<ApiResponse<{
+    total_users: number
+    total_admins: number
+    total_officers: number
+  }>> {
+    try {
+      // Get all users by fetching multiple pages to calculate statistics
+      let allUsers: any[] = []
+      let page = 1
+      let hasMore = true
+
+      while (hasMore) {
+        const response = await this.request<PaginatedResponse<any>>(`/alxET-rt-api/auth/users/?page=${page}`)
+        if (response.error) {
+          return response as ApiResponse<any>
+        }
+
+        allUsers = [...allUsers, ...(response.data?.results || [])]
+        hasMore = !!response.data?.next
+        page++
+      }
+
+      const totalUsers = allUsers.length
+      const totalAdmins = allUsers.filter(user => user.is_staff).length
+      const totalOfficers = allUsers.filter(user => !user.is_staff).length
+
+      return {
+        data: {
+          total_users: totalUsers,
+          total_admins: totalAdmins,
+          total_officers: totalOfficers
+        },
+        status: 200
+      }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Failed to get user statistics",
+        status: 500
+      }
+    }
   }
 
   async createUser(userData: {
@@ -184,15 +234,15 @@ class ApiClient {
     const campaignsResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/campaigns/")
     const officersResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/officers/")
     const linksResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/links/")
-    
+
     if (metricsResponse.error) {
       return metricsResponse as ApiResponse<any>
     }
-    
+
     // Aggregate metrics from daily metrics data
     const totalClicks = metricsResponse.data?.results?.reduce((sum: number, metric: any) => sum + (metric.total_clicks || 0), 0) || 0
     const verifiedLinks = linksResponse.data?.results?.filter((link: any) => link.is_active).length || 0
-    
+
     return {
       data: {
         total_clicks: totalClicks,
@@ -213,16 +263,16 @@ class ApiClient {
     try {
       // Get metrics data for weekly trends
       const metricsResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/metrics/")
-      
+
       // Get links data for officer activity analysis
       const linksResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/links/")
-      
+
       // Generate weekly clicks data from metrics
       let weeklyClicks = metricsResponse.data?.results?.map((metric: any) => ({
         date: metric.date || new Date().toISOString().split('T')[0],
         clicks: metric.total_clicks || 0
       })) || []
-      
+
       // If no metrics data, create sample data for the last 7 days
       if (weeklyClicks.length === 0) {
         const today = new Date()
@@ -235,7 +285,7 @@ class ApiClient {
           }
         })
       }
-      
+
       // Generate officer activity from links data
       const officerClicksMap = new Map<string, number>()
       linksResponse.data?.results?.forEach((link: any) => {
@@ -243,12 +293,12 @@ class ApiClient {
         const clicks = link.click_count || 0
         officerClicksMap.set(officerName, (officerClicksMap.get(officerName) || 0) + clicks)
       })
-      
+
       const officerActivity = Array.from(officerClicksMap.entries())
         .map(([officer, clicks]) => ({ officer, clicks }))
         .sort((a, b) => b.clicks - a.clicks)
         .slice(0, 10) // Top 10 officers
-      
+
       return {
         data: {
           weekly_clicks: weeklyClicks,

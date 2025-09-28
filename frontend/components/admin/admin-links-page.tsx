@@ -257,9 +257,9 @@ export function AdminLinksPage() {
                 <Label>Created</Label>
                 <Input value={new Date(editingLink.created_at).toLocaleString()} readOnly className="bg-gray-50" />
               </div>
-              <Button 
-                onClick={() => setEditingLink(null)} 
-                className="w-full" 
+              <Button
+                onClick={() => setEditingLink(null)}
+                className="w-full"
                 variant="outline"
               >
                 Close

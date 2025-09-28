@@ -321,7 +321,40 @@ export function useOfficers(page?: number) {
   return usePaginatedApi(apiCall, page)
 }
 
-export function useOfficerLinks(page?: number) {
+export const useOfficerLinks = (page: number = 1) => {
   const apiCall = useCallback((p?: number) => apiClient.getOfficerLinks(p), [])
   return usePaginatedApi(apiCall, page)
+}
+
+export const useUserStats = () => {
+  const [data, setData] = useState<{
+    total_users: number
+    total_admins: number
+    total_officers: number
+  } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const fetchStats = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await apiClient.getUserStats()
+      if (response.error) {
+        setError(response.error)
+      } else {
+        setData(response.data!)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
+
+  return { data, error, isLoading, refetch: fetchStats }
 }
