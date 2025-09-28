@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Edit, Trash2, ExternalLink } from "lucide-react"
-import { usePaginatedApi, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
+import { useAdminLinks, useCampaigns, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
 interface AdminLink {
@@ -31,9 +31,9 @@ export function AdminLinksPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingLink, setEditingLink] = useState<AdminLink | null>(null)
 
-  const { data: linksData, isLoading, error, refetch } = usePaginatedApi(() => apiClient.getAdminLinks(), [])
+  const { data: linksData, loading, error, refetch } = useAdminLinks()
 
-  const { data: campaignsData } = usePaginatedApi(() => apiClient.getCampaigns(), [])
+  const { data: campaignsData } = useCampaigns()
 
   const createMutation = useCreateMutation((data: any) => apiClient.createLink(data), {
     onSuccess: () => {
@@ -56,8 +56,8 @@ export function AdminLinksPage() {
     onSuccess: () => refetch(),
   })
 
-  const links = linksData?.results || []
-  const campaigns = campaignsData?.results || []
+  const links = linksData || []
+  const campaigns = campaignsData || []
 
   const filteredLinks = links.filter(
     (link: AdminLink) =>
@@ -85,7 +85,7 @@ export function AdminLinksPage() {
     updateMutation.mutate(data)
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Loading links...</div>

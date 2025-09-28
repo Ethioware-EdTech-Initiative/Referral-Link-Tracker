@@ -123,30 +123,30 @@ export class TokenManager {
   static validateTokenAndRole(expectedRole?: "admin" | "officer"): boolean {
     const token = this.getAccessToken()
     if (!token || this.isTokenExpired(token)) return false
-    
+
     if (expectedRole) {
       const userRole = this.getUserRole(token)
       return userRole === expectedRole
     }
-    
+
     return true
   }
 
   static getUserFromToken(token: string): User | null {
     const decoded = this.decodeToken(token)
     if (!decoded) return null
-    
+
     console.log("[v0] TokenManager - Decoding token for user data:")
     console.log("[v0] TokenManager - Raw decoded token:", decoded)
     console.log("[v0] TokenManager - is_staff from token:", decoded.is_staff)
     console.log("[v0] TokenManager - typeof is_staff:", typeof decoded.is_staff)
-    
+
     // Handle different possible formats for is_staff (boolean, string, or number)
     const rawIsStaff = (decoded as any).is_staff
     const isStaff = rawIsStaff === true || rawIsStaff === "true" || rawIsStaff === 1 || rawIsStaff === "1"
     console.log("[v0] TokenManager - Raw is_staff value:", rawIsStaff)
     console.log("[v0] TokenManager - Computed is_staff:", isStaff)
-    
+
     return {
       id: decoded.user_id,
       email: decoded.email || "",

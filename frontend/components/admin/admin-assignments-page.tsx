@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Trash2, Users, Target } from "lucide-react"
-import { usePaginatedApi, useCreateMutation, useDeleteMutation } from "@/hooks/use-api"
+import { useAssignments, useOfficers, useCampaigns, useCreateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
 interface Assignment {
@@ -28,11 +28,11 @@ interface Assignment {
 export function AdminAssignmentsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
-  const { data: assignmentsData, isLoading, error, refetch } = usePaginatedApi(() => apiClient.getAssignments(), [])
+  const { data: assignmentsData, loading, error, refetch } = useAssignments()
 
-  const { data: officersData } = usePaginatedApi(() => apiClient.getOfficers(), [])
+  const { data: officersData } = useOfficers()
 
-  const { data: campaignsData } = usePaginatedApi(() => apiClient.getCampaigns(), [])
+  const { data: campaignsData } = useCampaigns()
 
   const createMutation = useCreateMutation((data: any) => apiClient.createAssignment(data), {
     onSuccess: () => {
@@ -45,9 +45,9 @@ export function AdminAssignmentsPage() {
     onSuccess: () => refetch(),
   })
 
-  const assignments = assignmentsData?.results || []
-  const officers = officersData?.results || []
-  const campaigns = campaignsData?.results || []
+  const assignments = assignmentsData || []
+  const officers = officersData || []
+  const campaigns = campaignsData || []
 
   const handleCreateAssignment = (formData: FormData) => {
     const data = {
@@ -57,7 +57,7 @@ export function AdminAssignmentsPage() {
     createMutation.mutate(data)
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Loading assignments...</div>

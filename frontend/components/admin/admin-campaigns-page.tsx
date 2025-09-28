@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Edit, Trash2, Calendar } from "lucide-react"
-import { usePaginatedApi, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
+import { useCampaigns, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
 interface Campaign {
@@ -29,7 +29,7 @@ export function AdminCampaignsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
 
-  const { data: campaignsData, isLoading, error, refetch } = usePaginatedApi(() => apiClient.getCampaigns(), [])
+  const { data: campaignsData, loading, error, refetch } = useCampaigns()
 
   const createMutation = useCreateMutation((data: any) => apiClient.createCampaign(data), {
     onSuccess: () => {
@@ -52,7 +52,7 @@ export function AdminCampaignsPage() {
     onSuccess: () => refetch(),
   })
 
-  const campaigns = campaignsData?.results || []
+  const campaigns = campaignsData || []
 
   const filteredCampaigns = campaigns.filter(
     (campaign: Campaign) =>
@@ -84,7 +84,7 @@ export function AdminCampaignsPage() {
     updateMutation.mutate(data)
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Loading campaigns...</div>

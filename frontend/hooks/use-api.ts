@@ -119,7 +119,7 @@ export function usePaginatedApi<T>(
         }
       }
     },
-    [apiCall],
+    [apiCall, page],
   )
 
   useEffect(() => {
@@ -129,7 +129,7 @@ export function usePaginatedApi<T>(
     return () => {
       mountedRef.current = false
     }
-  }, [page, fetchData])
+  }, [page])
 
   const nextPage = useCallback(() => {
     if (hasNext) {
@@ -184,7 +184,7 @@ export function useCreateMutation<TData = any, TVariables = any>(
         if (response.error) {
           setError(response.error)
           options?.onError?.(response.error)
-        } else {
+        } else if (response.data !== undefined) {
           options?.onSuccess?.(response.data)
         }
       } catch (err) {
@@ -222,7 +222,7 @@ export function useUpdateMutation<TData = any, TVariables = any>(
         if (response.error) {
           setError(response.error)
           options?.onError?.(response.error)
-        } else {
+        } else if (response.data !== undefined) {
           options?.onSuccess?.(response.data)
         }
       } catch (err) {
@@ -260,7 +260,7 @@ export function useDeleteMutation<TData = any>(
         if (response.error) {
           setError(response.error)
           options?.onError?.(response.error)
-        } else {
+        } else if (response.data !== undefined) {
           options?.onSuccess?.(response.data)
         }
       } catch (err) {
@@ -297,41 +297,31 @@ export function useOfficerClicks() {
 }
 
 export function useCampaigns(page?: number) {
-  return usePaginatedApi(
-    useCallback((p) => apiClient.getCampaigns(p || page), [page]),
-    page,
-  )
+  const apiCall = useCallback((p?: number) => apiClient.getCampaigns(p), [])
+  return usePaginatedApi(apiCall, page)
 }
 
 export function useUsers(page?: number) {
-  return usePaginatedApi(
-    useCallback((p) => apiClient.getUsers(p || page), [page]),
-    page,
-  )
+  const apiCall = useCallback((p?: number) => apiClient.getUsers(p), [])
+  return usePaginatedApi(apiCall, page)
 }
 
 export function useAssignments(page?: number) {
-  return usePaginatedApi(
-    useCallback((p) => apiClient.getAssignments(p || page), [page]),
-    page,
-  )
+  const apiCall = useCallback((p?: number) => apiClient.getAssignments(p), [])
+  return usePaginatedApi(apiCall, page)
 }
 
 export function useAdminLinks(page?: number) {
-  return usePaginatedApi(
-    useCallback((p) => apiClient.getAdminLinks(p || page), [page]),
-    page,
-  )
+  const apiCall = useCallback((p?: number) => apiClient.getAdminLinks(p), [])
+  return usePaginatedApi(apiCall, page)
 }
 
 export function useOfficers(page?: number) {
-  return usePaginatedApi(
-    useCallback((p) => apiClient.getOfficers(p || page), [page]),
-    page,
-  )
+  const apiCall = useCallback((p?: number) => apiClient.getOfficers(p), [])
+  return usePaginatedApi(apiCall, page)
 }
 
 export function useOfficerLinks(page?: number) {
-  const apiCall = useCallback((p?: number) => apiClient.getOfficerLinks(p || page), [page])
+  const apiCall = useCallback((p?: number) => apiClient.getOfficerLinks(p), [])
   return usePaginatedApi(apiCall, page)
 }

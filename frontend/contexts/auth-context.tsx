@@ -85,11 +85,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (userFromToken) {
             console.log("[v0] Setting user data from valid token:", userFromToken)
             console.log("[v0] User role from token:", userFromToken.is_staff ? "admin" : "officer")
-            
+
             // Validate that the token role matches what we expect
             const tokenRole = TokenManager.getUserRole(accessToken)
             console.log("[v0] Direct token role verification:", tokenRole)
-            
+
             setUser(userFromToken)
           } else {
             console.log("[v0] Invalid token, clearing...")
@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true)
       console.log("[v0] Attempting login for:", email)
-      
+
       // Clear any existing tokens to prevent confusion
       console.log("[v0] Clearing existing tokens before login")
       TokenManager.removeTokens()
@@ -176,12 +176,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (tokens) {
           console.log("[v0] Setting tokens:", { hasAccess: !!tokens.access, hasRefresh: !!tokens.refresh })
-          
+
           // Validate token content before storing
           const preValidation = TokenManager.decodeToken(tokens.access)
           console.log("[v0] Pre-storage token validation:", preValidation)
           console.log("[v0] Pre-storage is_staff value:", preValidation?.is_staff)
-          
+
           TokenManager.setTokens(tokens)
 
           // Create user data - try from userInfo first, then extract from token
@@ -204,10 +204,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (userData) {
             console.log("[v0] Setting user data:", userData)
-            
+
             // Store complete user data in localStorage for persistence across page refreshes
             TokenManager.setUserData(userData)
-            
+
             setUser(userData)
 
             const userRole = userData.is_staff ? "admin" : "officer"

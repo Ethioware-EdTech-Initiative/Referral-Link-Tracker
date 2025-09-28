@@ -30,21 +30,21 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
       if (requiredRole && role !== requiredRole) {
         console.log("[v0] ProtectedRoute - Role mismatch. Required:", requiredRole, "Actual:", role)
-        
+
         // Additional token validation to prevent stale role issues
         const accessToken = TokenManager.getAccessToken()
         if (accessToken && !TokenManager.isTokenExpired(accessToken)) {
           const tokenRole = TokenManager.getUserRole(accessToken)
           console.log("[v0] ProtectedRoute - Token role verification:", tokenRole)
-          
+
           // Use token-based role if there's a mismatch
           const actualRole = tokenRole || role
-          
+
           if (actualRole === "admin") {
             console.log("[v0] ProtectedRoute - Redirecting to admin dashboard")
             router.push("/admin")
           } else if (actualRole === "officer") {
-            console.log("[v0] ProtectedRoute - Redirecting to officer dashboard")  
+            console.log("[v0] ProtectedRoute - Redirecting to officer dashboard")
             router.push("/officer")
           } else {
             console.log("[v0] ProtectedRoute - Unknown role, redirecting to login")
