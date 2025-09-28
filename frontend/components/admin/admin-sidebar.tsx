@@ -36,6 +36,7 @@ const navigation = [
   { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone },
   { name: "Assignments", href: "/admin/assignments", icon: UserCheck },
   { name: "Links", href: "/admin/links", icon: Link },
+  { name: "Tracking", href: "/admin/tracking", icon: Shield },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ]
 

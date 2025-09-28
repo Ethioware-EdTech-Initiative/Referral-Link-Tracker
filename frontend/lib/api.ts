@@ -543,13 +543,7 @@ class ApiClient {
     })
   }
 
-  // Tentative link update method - testing if backend supports it
-  async updateLink(id: string, linkData: { is_active?: boolean; revoke_at?: string | null }): Promise<ApiResponse<any>> {
-    return this.request(`/alxET-rt-api/admin/admin-dash/links/${id}/`, {
-      method: "PATCH",
-      body: JSON.stringify(linkData),
-    })
-  }
+
 
   async deleteLink(id: string): Promise<ApiResponse> {
     return this.request(`/alxET-rt-api/admin/admin-dash/links/${id}/`, {
@@ -577,6 +571,22 @@ class ApiClient {
   async getOfficerLinks(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {
     const params = page ? `?page=${page}` : ""
     return this.request(`/alxET-rt-api/officer/officer-dash/links/${params}`)
+  }
+
+  // Tracking endpoints
+  async getClickEvents(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {
+    const params = page ? `?page=${page}` : ""
+    return this.request(`/alxET-rt-api/tracking/click_events/${params}`)
+  }
+
+  async getSignupEvents(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {
+    const params = page ? `?page=${page}` : ""
+    return this.request(`/alxET-rt-api/tracking/signup_events/${params}`)
+  }
+
+  async getFraudFindings(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {
+    const params = page ? `?page=${page}` : ""
+    return this.request(`/alxET-rt-api/tracking/fraud_findings/${params}`)
   }
 }
 

@@ -6,14 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Plus, Eye, Trash2, ExternalLink, Search, Copy, Link, Edit, Power, Calendar, CheckSquare, Square } from "lucide-react"
-import { useAdminLinks, useAllCampaigns, useAllOfficers, useCreateMutation, useDeleteMutation, useUpdateMutation } from "@/hooks/use-api"
+import { Plus, Eye, Trash2, ExternalLink, Search, Copy, Link, Calendar, CheckSquare, Square } from "lucide-react"
+import { useAdminLinks, useAllCampaigns, useAllOfficers, useCreateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
 interface AdminLink {
@@ -41,7 +40,6 @@ export function AdminLinksPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [viewingLink, setViewingLink] = useState<AdminLink | null>(null)
-  const [editingLink, setEditingLink] = useState<AdminLink | null>(null)
   const [deletingLink, setDeletingLink] = useState<AdminLink | null>(null)
   const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set())
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
@@ -54,66 +52,30 @@ export function AdminLinksPage() {
   const { data: campaignsData } = useAllCampaigns()
   const { data: officersData } = useAllOfficers()
 
+  // Create mutation with form validation
   const createMutation = useCreateMutation((data: any) => apiClient.createLink(data), {
     onSuccess: () => {
       refetch()
       setIsCreateDialogOpen(false)
-      setNewLink({ officer: "", campaign: "" })
       setFormErrors({})
+      setNewLink({
+        officer: "",
+        campaign: "",
+      })
     },
     onError: (error: string) => {
-      console.log('[CREATE ERROR]', error)
-      try {
-        const errorObj = JSON.parse(error)
-        if (errorObj.officer) {
-          setFormErrors({ officer: errorObj.officer[0] })
-        } else if (errorObj.campaign) {
-          setFormErrors({ campaign: errorObj.campaign[0] })
-        } else if (errorObj.non_field_errors) {
-          setFormErrors({ general: errorObj.non_field_errors[0] })
-        } else {
-          setFormErrors({ general: error || "Failed to create link" })
-        }
-      } catch (e) {
-        setFormErrors({ general: error || "Failed to create link" })
-      }
+      setFormErrors({ general: error || "Failed to create link" })
     },
   })
 
-  const updateMutation = useUpdateMutation(
-    (data: { id: string;[key: string]: any }) => apiClient.updateLink(data.id, { is_active: data.is_active, revoke_at: data.revoke_at }),
-    {
-      onSuccess: () => {
-        refetch()
-        setEditingLink(null)
-        setFormErrors({})
-      },
-      onError: (error: string) => {
-        console.log('[UPDATE ERROR]', error)
-        try {
-          const errorObj = JSON.parse(error)
-          if (errorObj.is_active) {
-            setFormErrors({ general: errorObj.is_active[0] })
-          } else if (errorObj.revoke_at) {
-            setFormErrors({ general: errorObj.revoke_at[0] })
-          } else {
-            setFormErrors({ general: error || "Failed to update link" })
-          }
-        } catch (e) {
-          setFormErrors({ general: error || "Update not supported - links are immutable after creation" })
-        }
-      },
-    }
-  )
-
+  // Delete mutation with optimistic updates
   const deleteMutation = useDeleteMutation((id: string) => apiClient.deleteLink(id), {
     onSuccess: () => {
-      refetch()
       setDeletingLink(null)
+      refetch()
     },
     onError: (error: string) => {
-      console.log('[DELETE ERROR]', error)
-      setDeletingLink(null)
+      setFormErrors({ general: error || "Failed to delete link" })
     },
   })
 
@@ -121,21 +83,25 @@ export function AdminLinksPage() {
   const campaigns = campaignsData || []
   const officers = officersData || []
 
-  const filteredLinks = links.filter(
-    (link: AdminLink) =>
-      link.full_link?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      link.ref_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      link.campaign?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  // Filter links based on search term
+  const filteredLinks = links.filter((link: AdminLink) => {
+    if (!searchTerm) return true
+
+    return (
       link.officer?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      link.officer?.email?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      link.officer?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.campaign?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.ref_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.full_link?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  })
 
   const handleCreateLink = () => {
     const errors: { [key: string]: string } = {}
 
     // Form validation
-    if (!newLink.officer) errors.officer = "Officer is required"
-    if (!newLink.campaign) errors.campaign = "Campaign is required"
+    if (!newLink.officer.trim()) errors.officer = "Officer selection is required"
+    if (!newLink.campaign.trim()) errors.campaign = "Campaign selection is required"
 
     setFormErrors(errors)
     if (Object.keys(errors).length > 0) return
@@ -148,119 +114,99 @@ export function AdminLinksPage() {
     createMutation.mutate(data)
   }
 
-  const handleUpdateLink = () => {
-    if (!editingLink) return
-
-    const errors: { [key: string]: string } = {}
-
-    // Basic validation for revoke_at
-    if (editingLink.revoke_at && new Date(editingLink.revoke_at) <= new Date()) {
-      errors.revoke_at = "Revocation date must be in the future"
-    }
-
-    setFormErrors(errors)
-    if (Object.keys(errors).length > 0) return
-
-    const updateData: any = {
-      id: editingLink.id,
-      is_active: editingLink.is_active,
-    }
-
-    if (editingLink.revoke_at) {
-      updateData.revoke_at = new Date(editingLink.revoke_at).toISOString()
-    } else {
-      updateData.revoke_at = null
-    }
-
-    updateMutation.mutate(updateData)
-  }
-
   const handleDeleteLink = () => {
-    if (!deletingLink) return
+    if (!deletingLink?.id) return
     deleteMutation.mutate(deletingLink.id)
   }
 
   const handleBulkDelete = () => {
     if (selectedLinks.size === 0) return
-    // For now, delete them one by one - could be optimized with bulk endpoint if available
+
+    // Delete selected links one by one
     selectedLinks.forEach(linkId => {
       deleteMutation.mutate(linkId)
     })
     setSelectedLinks(new Set())
   }
 
-  const handleBulkToggleStatus = (active: boolean) => {
-    if (selectedLinks.size === 0) return
-    // For now, update them one by one - could be optimized with bulk endpoint if available
-    selectedLinks.forEach(linkId => {
-      const link = links.find((l: AdminLink) => l.id === linkId)
-      if (link) {
-        updateMutation.mutate({ id: linkId, is_active: active })
-      }
-    })
-    setSelectedLinks(new Set())
-  }
-
-  const toggleLinkSelection = (linkId: string) => {
-    const newSelection = new Set(selectedLinks)
-    if (newSelection.has(linkId)) {
-      newSelection.delete(linkId)
-    } else {
-      newSelection.add(linkId)
-    }
-    setSelectedLinks(newSelection)
-  }
-
-  const toggleSelectAll = () => {
-    if (selectedLinks.size === filteredLinks.length) {
-      setSelectedLinks(new Set())
-    } else {
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
       setSelectedLinks(new Set(filteredLinks.map((link: AdminLink) => link.id)))
+    } else {
+      setSelectedLinks(new Set())
     }
   }
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      // You might want to add a toast notification here
-    } catch (err) {
-      console.error('Failed to copy text: ', err)
+  const handleSelectLink = (linkId: string, checked: boolean) => {
+    const newSelected = new Set(selectedLinks)
+    if (checked) {
+      newSelected.add(linkId)
+    } else {
+      newSelected.delete(linkId)
     }
+    setSelectedLinks(newSelected)
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString()
+  }
+
+  const isExpiringSoon = (link: AdminLink) => {
+    if (!link.revoke_at) return false
+    const revokeDate = new Date(link.revoke_at)
+    const now = new Date()
+    const daysDiff = Math.ceil((revokeDate.getTime() - now.getTime()) / (1000 * 3600 * 24))
+    return daysDiff <= 7 && daysDiff > 0
+  }
+
+  const isExpired = (link: AdminLink) => {
+    if (!link.revoke_at) return false
+    return new Date(link.revoke_at) <= new Date()
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading links...</p>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-red-500">Error loading links: {error}</div>
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertDescription>Failed to load links: {error}</AlertDescription>
+        </Alert>
       </div>
     )
   }
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Link Management</h1>
-          <p className="text-muted-foreground">Manage referral links and track their performance</p>
+          <h1 className="text-3xl font-bold tracking-tight">Referral Links</h1>
+          <p className="text-muted-foreground">Manage all referral links across campaigns and officers.</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#00ff88] hover:bg-[#00e67a] text-black">
+            <Button className="bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
-              Create Link
+              Generate New Link
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Referral Link</DialogTitle>
+              <DialogTitle>Generate New Referral Link</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {formErrors.general && (
@@ -270,19 +216,9 @@ export function AdminLinksPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="officer">
-                  Officer <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={newLink.officer}
-                  onValueChange={(value) => {
-                    setNewLink({ ...newLink, officer: value })
-                    if (formErrors.officer) {
-                      setFormErrors({ ...formErrors, officer: "" })
-                    }
-                  }}
-                >
-                  <SelectTrigger className={formErrors.officer ? "border-red-500" : ""}>
+                <Label htmlFor="officer">Officer</Label>
+                <Select value={newLink.officer} onValueChange={(value) => setNewLink({ ...newLink, officer: value })}>
+                  <SelectTrigger>
                     <SelectValue placeholder="Select an officer" />
                   </SelectTrigger>
                   <SelectContent>
@@ -293,25 +229,13 @@ export function AdminLinksPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {formErrors.officer && (
-                  <p className="text-sm text-red-500">{formErrors.officer}</p>
-                )}
+                {formErrors.officer && <p className="text-red-500 text-sm">{formErrors.officer}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="campaign">
-                  Campaign <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={newLink.campaign}
-                  onValueChange={(value) => {
-                    setNewLink({ ...newLink, campaign: value })
-                    if (formErrors.campaign) {
-                      setFormErrors({ ...formErrors, campaign: "" })
-                    }
-                  }}
-                >
-                  <SelectTrigger className={formErrors.campaign ? "border-red-500" : ""}>
+                <Label htmlFor="campaign">Campaign</Label>
+                <Select value={newLink.campaign} onValueChange={(value) => setNewLink({ ...newLink, campaign: value })}>
+                  <SelectTrigger>
                     <SelectValue placeholder="Select a campaign" />
                   </SelectTrigger>
                   <SelectContent>
@@ -322,35 +246,15 @@ export function AdminLinksPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {formErrors.campaign && (
-                  <p className="text-sm text-red-500">{formErrors.campaign}</p>
-                )}
+                {formErrors.campaign && <p className="text-red-500 text-sm">{formErrors.campaign}</p>}
               </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setIsCreateDialogOpen(false)
-                    setNewLink({ officer: "", campaign: "" })
-                    setFormErrors({})
-                  }}
-                >
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  onClick={handleCreateLink}
-                  disabled={createMutation.isLoading}
-                  className="flex-1 bg-[#00ff88] hover:bg-[#00e67a] text-black"
-                >
-                  {createMutation.isLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
-                  ) : (
-                    "Create Link"
-                  )}
+                <Button onClick={handleCreateLink} disabled={createMutation.isLoading}>
+                  {createMutation.isLoading ? "Generating..." : "Generate Link"}
                 </Button>
               </div>
             </div>
@@ -358,455 +262,322 @@ export function AdminLinksPage() {
         </Dialog>
       </div>
 
-      {/* Search Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search Links
-          </CardTitle>
-          <CardDescription>
-            Find links by URL, reference code, officer name, or campaign
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Input
-            placeholder="Search links..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </CardContent>
-      </Card>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Links</CardTitle>
+            <Link className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{links.length}</div>
+          </CardContent>
+        </Card>
 
-      {/* Links Table */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Links</CardTitle>
+            <CheckSquare className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{links.filter((l: AdminLink) => l.is_active && !isExpired(l)).length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Clicks</CardTitle>
+            <ExternalLink className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{links.reduce((sum: number, l: AdminLink) => sum + (l.click_count || 0), 0)}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Signups</CardTitle>
+            <ExternalLink className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{links.reduce((sum: number, l: AdminLink) => sum + (l.signup_count || 0), 0)}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Link className="h-5 w-5" />
-                Referral Links ({filteredLinks.length})
-              </CardTitle>
-              <CardDescription>
-                All generated referral links with performance metrics
-              </CardDescription>
+              <CardTitle>All Referral Links ({links.length})</CardTitle>
+              <CardDescription>Manage and monitor all generated referral links{searchTerm && ` (${filteredLinks.length} shown)`}</CardDescription>
             </div>
-
-            {selectedLinks.size > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {selectedLinks.size} selected
-                </span>
+            <div className="flex items-center gap-2">
+              {selectedLinks.size > 0 && (
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkToggleStatus(true)}
-                  className="text-green-600"
-                >
-                  <Power className="h-4 w-4 mr-1" />
-                  Activate
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkToggleStatus(false)}
-                  className="text-orange-600"
-                >
-                  <Power className="h-4 w-4 mr-1" />
-                  Deactivate
-                </Button>
-                <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
                   onClick={handleBulkDelete}
-                  className="text-red-600"
+                  disabled={deleteMutation.isLoading}
                 >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete ({selectedLinks.size})
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Selected ({selectedLinks.size})
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search links by officer, campaign, or ref code..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleSelectAll}
-                      className="h-6 w-6 p-0"
-                    >
-                      {selectedLinks.size === filteredLinks.length && filteredLinks.length > 0 ? (
-                        <CheckSquare className="h-4 w-4" />
-                      ) : (
-                        <Square className="h-4 w-4" />
-                      )}
-                    </Button>
+                  <TableHead className="w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectedLinks.size === filteredLinks.length && filteredLinks.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                    />
                   </TableHead>
-                  <TableHead>Link & Code</TableHead>
                   <TableHead>Officer</TableHead>
                   <TableHead>Campaign</TableHead>
+                  <TableHead>Ref Code</TableHead>
                   <TableHead>Performance</TableHead>
-                  <TableHead>Status & Expiry</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead className="w-[120px]">Actions</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLinks.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No links found
+                {filteredLinks.map((link: AdminLink) => (
+                  <TableRow key={link.id}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedLinks.has(link.id)}
+                        onChange={(e) => handleSelectLink(link.id, e.target.checked)}
+                      />
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredLinks.map((link: AdminLink) => (
-                    <TableRow key={link.id} className={selectedLinks.has(link.id) ? "bg-muted/50" : ""}>
-                      <TableCell>
+                    <TableCell className="font-medium">
+                      <div>
+                        <div className="font-medium">{link.officer?.full_name || "Unknown"}</div>
+                        <div className="text-sm text-muted-foreground">{link.officer?.email}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{link.campaign?.name || "Unknown Campaign"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
+                          {link.ref_code}
+                        </code>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleLinkSelection(link.id)}
-                          className="h-6 w-6 p-0"
+                          onClick={() => copyToClipboard(link.ref_code)}
                         >
-                          {selectedLinks.has(link.id) ? (
-                            <CheckSquare className="h-4 w-4 text-primary" />
-                          ) : (
-                            <Square className="h-4 w-4" />
-                          )}
+                          <Copy className="h-3 w-3" />
                         </Button>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                            <a
-                              href={link.full_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline font-medium text-sm max-w-[200px] truncate block"
-                            >
-                              {link.full_link}
-                            </a>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(link.full_link)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div className="flex items-center gap-4">
+                          <span>{link.click_count || 0} clicks</span>
+                          <span>{link.signup_count || 0} signups</span>
+                        </div>
+                        <div className="text-muted-foreground">
+                          {link.click_count > 0
+                            ? `${((link.signup_count || 0) / link.click_count * 100).toFixed(1)}% conversion`
+                            : "No data"
+                          }
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {isExpired(link) ? (
+                          <Badge variant="destructive">Expired</Badge>
+                        ) : isExpiringSoon(link) ? (
+                          <Badge variant="secondary">Expiring Soon</Badge>
+                        ) : link.is_active ? (
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Active</Badge>
+                        ) : (
+                          <Badge variant="secondary">Inactive</Badge>
+                        )}
+                        {link.revoke_at && (
+                          <div className="text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            {formatDate(link.revoke_at)}
                           </div>
-                          <div className="text-xs text-muted-foreground font-mono">
-                            Code: {link.ref_code}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium">{link.officer?.full_name}</div>
-                          <div className="text-sm text-muted-foreground">{link.officer?.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{link.campaign?.name}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-sm">
-                            <span className="font-medium">{link.click_count || 0}</span> clicks
-                          </div>
-                          <div className="text-sm">
-                            <span className="font-medium">{link.signup_count || 0}</span> signups
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <Badge variant={link.is_active ? "default" : "secondary"}>
-                            {link.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                          {link.revoke_at && (
-                            <div className="text-xs text-orange-600 flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              Expires: {new Date(link.revoke_at).toLocaleDateString()}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {new Date(link.created_at).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setViewingLink(link)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Eye className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingLink({ ...link })}
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setDeletingLink(link)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-muted-foreground">
+                        {formatDate(link.created_at)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setViewingLink(link)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeletingLink(link)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
+
+          {filteredLinks.length === 0 && (
+            <div className="text-center py-8">
+              <Link className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                {searchTerm ? "No links match your search." : "No referral links found."}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* View Link Details Dialog */}
-      <Dialog open={!!viewingLink} onOpenChange={() => setViewingLink(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Link Details</DialogTitle>
-          </DialogHeader>
-          {viewingLink && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Full Link</Label>
-                <div className="flex items-center gap-2">
-                  <Input value={viewingLink.full_link} readOnly className="bg-muted" />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard(viewingLink.full_link)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+      {/* View Link Dialog */}
+      {viewingLink && (
+        <Dialog open={!!viewingLink} onOpenChange={() => setViewingLink(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Link Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Full Link</Label>
+                  <div className="flex items-center gap-2">
+                    <Input value={viewingLink.full_link} readOnly className="bg-muted" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(viewingLink.full_link)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label>Reference Code</Label>
-                <Input value={viewingLink.ref_code} readOnly className="bg-muted font-mono" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Officer</Label>
-                <Input value={`${viewingLink.officer?.full_name} (${viewingLink.officer?.email})`} readOnly className="bg-muted" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Campaign</Label>
-                <Input value={viewingLink.campaign?.name || 'N/A'} readOnly className="bg-muted" />
+                <div className="space-y-2">
+                  <Label>Reference Code</Label>
+                  <Input value={viewingLink.ref_code} readOnly className="bg-muted font-mono" />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Clicks</Label>
+                  <Label>Officer</Label>
+                  <Input value={`${viewingLink.officer?.full_name} (${viewingLink.officer?.email})`} readOnly className="bg-muted" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Campaign</Label>
+                  <Input value={viewingLink.campaign?.name || 'N/A'} readOnly className="bg-muted" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Click Count</Label>
                   <Input value={viewingLink.click_count || 0} readOnly className="bg-muted" />
                 </div>
+
                 <div className="space-y-2">
-                  <Label>Signups</Label>
+                  <Label>Signup Count</Label>
                   <Input value={viewingLink.signup_count || 0} readOnly className="bg-muted" />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <div className="pt-1">
-                  <Badge variant={viewingLink.is_active ? "default" : "secondary"}>
-                    {viewingLink.is_active ? "Active" : "Inactive"}
-                  </Badge>
+                <div className="space-y-2">
+                  <Label>Conversion Rate</Label>
+                  <Input
+                    value={viewingLink.click_count > 0
+                      ? `${((viewingLink.signup_count || 0) / viewingLink.click_count * 100).toFixed(2)}%`
+                      : "0%"
+                    }
+                    readOnly
+                    className="bg-muted"
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Created</Label>
-                  <Input value={new Date(viewingLink.created_at).toLocaleString()} readOnly className="bg-muted" />
-                </div>
-                {viewingLink.updated_at && (
-                  <div className="space-y-2">
-                    <Label>Updated</Label>
-                    <Input value={new Date(viewingLink.updated_at).toLocaleString()} readOnly className="bg-muted" />
+                  <Label>Status</Label>
+                  <div className="pt-2">
+                    {isExpired(viewingLink) ? (
+                      <Badge variant="destructive">Expired</Badge>
+                    ) : isExpiringSoon(viewingLink) ? (
+                      <Badge variant="secondary">Expiring Soon</Badge>
+                    ) : viewingLink.is_active ? (
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Active</Badge>
+                    ) : (
+                      <Badge variant="secondary">Inactive</Badge>
+                    )}
                   </div>
-                )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Created Date</Label>
+                  <Input value={formatDate(viewingLink.created_at)} readOnly className="bg-muted" />
+                </div>
               </div>
 
               {viewingLink.revoke_at && (
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-orange-600">
-                    <Calendar className="h-4 w-4" />
-                    Revocation Date
-                  </Label>
-                  <Input value={new Date(viewingLink.revoke_at).toLocaleString()} readOnly className="bg-muted border-orange-200" />
-                  <p className="text-xs text-orange-600">
-                    This link will be automatically deactivated on the above date
-                  </p>
+                  <Label>Revocation Date</Label>
+                  <Input value={formatDate(viewingLink.revoke_at)} readOnly className="bg-muted" />
                 </div>
               )}
-
-              <Button
-                onClick={() => setViewingLink(null)}
-                className="w-full"
-                variant="outline"
-              >
-                Close
-              </Button>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Link Dialog */}
-      <Dialog open={!!editingLink} onOpenChange={() => {
-        setEditingLink(null)
-        setFormErrors({})
-      }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Referral Link</DialogTitle>
-          </DialogHeader>
-          {editingLink && (
-            <div className="space-y-4">
-              {formErrors.general && (
-                <Alert variant="destructive">
-                  <AlertDescription>{formErrors.general}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label>Full Link (Read-only)</Label>
-                <Input value={editingLink.full_link} readOnly className="bg-muted" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Reference Code (Read-only)</Label>
-                <Input value={editingLink.ref_code} readOnly className="bg-muted font-mono" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Officer (Read-only)</Label>
-                <Input value={`${editingLink.officer?.full_name} (${editingLink.officer?.email})`} readOnly className="bg-muted" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Campaign (Read-only)</Label>
-                <Input value={editingLink.campaign?.name || 'N/A'} readOnly className="bg-muted" />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Power className="h-4 w-4" />
-                  Link Status
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={editingLink.is_active}
-                    onCheckedChange={(checked) => setEditingLink({ ...editingLink, is_active: checked })}
-                  />
-                  <span className="text-sm font-medium">
-                    {editingLink.is_active ? "Active" : "Inactive"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Revocation Date (Optional)
-                </Label>
-                <Input
-                  type="datetime-local"
-                  value={editingLink.revoke_at ? new Date(editingLink.revoke_at).toISOString().slice(0, 16) : ""}
-                  onChange={(e) => setEditingLink({ ...editingLink, revoke_at: e.target.value ? e.target.value : null })}
-                  className={formErrors.revoke_at ? "border-red-500" : ""}
-                />
-                {formErrors.revoke_at && (
-                  <p className="text-sm text-red-500">{formErrors.revoke_at}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Set a future date to automatically deactivate this link
-                </p>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setEditingLink(null)
-                    setFormErrors({})
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleUpdateLink}
-                  disabled={updateMutation.isLoading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {updateMutation.isLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    "Update Link"
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingLink} onOpenChange={() => setDeletingLink(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Referral Link</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this referral link? This action cannot be undone.
-              <br /><br />
-              <strong>Link:</strong> {deletingLink?.full_link}
-              <br />
-              <strong>Officer:</strong> {deletingLink?.officer?.full_name}
-              <br />
-              <strong>Campaign:</strong> {deletingLink?.campaign?.name}
+              This will permanently delete the referral link for <strong>{deletingLink?.officer?.full_name}</strong> in campaign <strong>{deletingLink?.campaign?.name}</strong>.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeletingLink(null)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteLink}
-              disabled={deleteMutation.isLoading}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {deleteMutation.isLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                "Delete Link"
-              )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteLink} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleteMutation.isLoading ? "Deleting..." : "Delete Link"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
