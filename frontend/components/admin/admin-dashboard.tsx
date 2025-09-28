@@ -38,7 +38,7 @@ export function AdminDashboard() {
       change: "+12%",
     },
     {
-      title: "Verified Links",
+      title: "Active Links",
       value: metricsData?.verified_links || 0,
       icon: CheckCircle,
       color: "text-green-600",
@@ -100,40 +100,50 @@ export function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Clicks Chart */}
+          {/* Weekly Clicks Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Weekly Click Trends
+              Click Trends
             </CardTitle>
-            <CardDescription>System-wide click performance over the past week</CardDescription>
+            <CardDescription>System-wide click performance over time</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={statsData?.weekly_clicks || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(value) =>
-                      new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                    }
-                  />
-                  <YAxis />
-                  <Tooltip
-                    labelFormatter={(value) => formatDate(value)}
-                    formatter={(value: number) => [value, "Clicks"]}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="clicks"
-                    stroke="#3b82f6"
-                    strokeWidth={3}
-                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 5 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {statsData?.weekly_clicks && statsData.weekly_clicks.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={statsData.weekly_clicks}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(value) =>
+                        new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                      }
+                    />
+                    <YAxis />
+                    <Tooltip
+                      labelFormatter={(value) => formatDate(value)}
+                      formatter={(value: number) => [value, "Clicks"]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="clicks"
+                      stroke="#3b82f6"
+                      strokeWidth={3}
+                      dot={{ fill: "#3b82f6", strokeWidth: 2, r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <div className="text-center">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No click data available</p>
+                    <p className="text-sm">Data will appear as users interact with links</p>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -149,15 +159,32 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={statsData?.officer_activity?.slice(0, 8) || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="officer" angle={-45} textAnchor="end" height={80} />
-                  <YAxis />
-                  <Tooltip formatter={(value: number) => [value, "Clicks"]} />
-                  <Bar dataKey="clicks" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {statsData?.officer_activity && statsData.officer_activity.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statsData.officer_activity.slice(0, 8)}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="officer" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={80}
+                      interval={0}
+                      fontSize={12}
+                    />
+                    <YAxis />
+                    <Tooltip formatter={(value: number) => [value, "Clicks"]} />
+                    <Bar dataKey="clicks" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <div className="text-center">
+                    <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No officer activity data</p>
+                    <p className="text-sm">Activity will show as officers generate clicks</p>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -222,7 +249,7 @@ export function AdminDashboard() {
         </Card>
       </div>
 
-      {/* System Status */}
+        {/* System Status */}
       <Card>
         <CardHeader>
           <CardTitle>System Status</CardTitle>
@@ -231,31 +258,35 @@ export function AdminDashboard() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className={`w-3 h-3 rounded-full ${metricsError || statsError ? 'bg-red-500' : 'bg-green-500'}`}></div>
               <div>
                 <p className="font-medium">API Status</p>
-                <p className="text-sm text-muted-foreground">All systems operational</p>
+                <p className="text-sm text-muted-foreground">
+                  {metricsError || statsError ? 'Connection issues detected' : 'All systems operational'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${metricsLoading || statsLoading ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+              <div>
+                <p className="font-medium">Data Loading</p>
+                <p className="text-sm text-muted-foreground">
+                  {metricsLoading || statsLoading ? 'Loading dashboard data...' : 'Data synchronized'}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               <div>
-                <p className="font-medium">Database</p>
-                <p className="text-sm text-muted-foreground">Connected and healthy</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              <div>
-                <p className="font-medium">Link Verification</p>
-                <p className="text-sm text-muted-foreground">Processing queue: 12 pending</p>
+                <p className="font-medium">Backend Integration</p>
+                <p className="text-sm text-muted-foreground">
+                  Connected to referral-link-tracker.vercel.app
+                </p>
               </div>
             </div>
           </div>
         </CardContent>
-      </Card>
-
-      {/* Error States */}
+      </Card>      {/* Error States */}
       {(metricsError || statsError) && (
         <Card className="border-destructive">
           <CardContent className="p-6">

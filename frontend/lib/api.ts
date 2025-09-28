@@ -27,9 +27,9 @@ class ApiClient {
 
     // Get access token and add to headers
     const accessToken = TokenManager.getAccessToken()
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     }
 
     if (accessToken && !TokenManager.isTokenExpired(accessToken)) {
@@ -102,7 +102,7 @@ class ApiClient {
     }
 
     // Clear tokens if refresh fails
-    TokenManager.clearTokens()
+    TokenManager.removeTokens()
     return false
   }
 
@@ -121,11 +121,11 @@ class ApiClient {
 
   async logout(): Promise<ApiResponse<{ message: string }>> {
     const refreshToken = TokenManager.getRefreshToken()
-    const response = await this.request("/alxET-rt-api/auth/logout/", {
+    const response = await this.request<{ message: string }>("/alxET-rt-api/auth/logout/", {
       method: "POST",
       body: JSON.stringify({ refresh: refreshToken }),
     })
-    TokenManager.clearTokens()
+    TokenManager.removeTokens()
     return response
   }
 
@@ -179,7 +179,29 @@ class ApiClient {
       campaigns: number
     }>
   > {
-    return this.request("/alxET-rt-api/admin/admin-dash/metrics/")
+    // Get metrics data and aggregate it since backend returns paginated DailyMetrics
+    const metricsResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/metrics/")
+    const campaignsResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/campaigns/")
+    const officersResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/officers/")
+    const linksResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/links/")
+    
+    if (metricsResponse.error) {
+      return metricsResponse as ApiResponse<any>
+    }
+    
+    // Aggregate metrics from daily metrics data
+    const totalClicks = metricsResponse.data?.results?.reduce((sum: number, metric: any) => sum + (metric.total_clicks || 0), 0) || 0
+    const verifiedLinks = linksResponse.data?.results?.filter((link: any) => link.is_active).length || 0
+    
+    return {
+      data: {
+        total_clicks: totalClicks,
+        verified_links: verifiedLinks,
+        officers: officersResponse.data?.count || 0,
+        campaigns: campaignsResponse.data?.count || 0
+      },
+      status: 200
+    }
   }
 
   async getAdminStats(): Promise<
@@ -188,7 +210,58 @@ class ApiClient {
       officer_activity: Array<{ officer: string; clicks: number }>
     }>
   > {
-    return this.request("/alxET-rt-api/admin/admin-dash/stats/")
+    try {
+      // Get metrics data for weekly trends
+      const metricsResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/metrics/")
+      
+      // Get links data for officer activity analysis
+      const linksResponse = await this.request<PaginatedResponse<any>>("/alxET-rt-api/admin/admin-dash/links/")
+      
+      // Generate weekly clicks data from metrics
+      let weeklyClicks = metricsResponse.data?.results?.map((metric: any) => ({
+        date: metric.date || new Date().toISOString().split('T')[0],
+        clicks: metric.total_clicks || 0
+      })) || []
+      
+      // If no metrics data, create sample data for the last 7 days
+      if (weeklyClicks.length === 0) {
+        const today = new Date()
+        weeklyClicks = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date(today)
+          date.setDate(date.getDate() - (6 - i))
+          return {
+            date: date.toISOString().split('T')[0],
+            clicks: 0
+          }
+        })
+      }
+      
+      // Generate officer activity from links data
+      const officerClicksMap = new Map<string, number>()
+      linksResponse.data?.results?.forEach((link: any) => {
+        const officerName = link.officer?.full_name || 'Unknown'
+        const clicks = link.click_count || 0
+        officerClicksMap.set(officerName, (officerClicksMap.get(officerName) || 0) + clicks)
+      })
+      
+      const officerActivity = Array.from(officerClicksMap.entries())
+        .map(([officer, clicks]) => ({ officer, clicks }))
+        .sort((a, b) => b.clicks - a.clicks)
+        .slice(0, 10) // Top 10 officers
+      
+      return {
+        data: {
+          weekly_clicks: weeklyClicks,
+          officer_activity: officerActivity
+        },
+        status: 200
+      }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : 'Failed to fetch admin stats',
+        status: 500
+      }
+    }
   }
 
   async getCampaigns(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {
@@ -249,22 +322,16 @@ class ApiClient {
   }
 
   async createLink(linkData: {
-    url: string
+    officer: string
     campaign: string
-    is_verified: boolean
   }): Promise<ApiResponse<any>> {
-    return this.request("/alxET-rt-api/admin/admin-dash/links/", {
+    return this.request("/alxET-rt-api/admin/admin-dash/links/gen-link/", {
       method: "POST",
       body: JSON.stringify(linkData),
     })
   }
 
-  async updateLink(id: string, linkData: any): Promise<ApiResponse<any>> {
-    return this.request(`/alxET-rt-api/admin/admin-dash/links/${id}/`, {
-      method: "PATCH",
-      body: JSON.stringify(linkData),
-    })
-  }
+  // Note: Link update not available in backend - links are read-only after creation
 
   async deleteLink(id: string): Promise<ApiResponse> {
     return this.request(`/alxET-rt-api/admin/admin-dash/links/${id}/`, {

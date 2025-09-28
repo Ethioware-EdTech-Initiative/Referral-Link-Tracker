@@ -11,19 +11,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Edit, Trash2, ExternalLink } from "lucide-react"
-import { useAdminLinks, useCampaigns, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
+import { useAdminLinks, useCampaigns, useOfficers, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
 interface AdminLink {
   id: string
-  url: string
+  full_link: string
+  ref_code: string
+  officer: {
+    id: string
+    full_name: string
+    email: string
+  }
   campaign: {
     id: string
     name: string
   }
-  is_verified: boolean
+  click_count: number
+  signup_count: number
+  is_active: boolean
   created_at: string
-  click_count?: number
 }
 
 export function AdminLinksPage() {
@@ -34,6 +41,7 @@ export function AdminLinksPage() {
   const { data: linksData, loading, error, refetch } = useAdminLinks()
 
   const { data: campaignsData } = useCampaigns()
+  const { data: officersData } = useOfficers()
 
   const createMutation = useCreateMutation((data: any) => apiClient.createLink(data), {
     onSuccess: () => {
@@ -42,15 +50,7 @@ export function AdminLinksPage() {
     },
   })
 
-  const updateMutation = useUpdateMutation(
-    (data: { id: string; [key: string]: any }) => apiClient.updateLink(data.id, data),
-    {
-      onSuccess: () => {
-        refetch()
-        setEditingLink(null)
-      },
-    },
-  )
+  // Note: Link updates not supported by backend - referral links are immutable
 
   const deleteMutation = useDeleteMutation((id: string) => apiClient.deleteLink(id), {
     onSuccess: () => refetch(),
@@ -58,32 +58,24 @@ export function AdminLinksPage() {
 
   const links = linksData || []
   const campaigns = campaignsData || []
+  const officers = officersData || []
 
   const filteredLinks = links.filter(
     (link: AdminLink) =>
-      link.url?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      link.campaign?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+      link.full_link?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.campaign?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.officer?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const handleCreateLink = (formData: FormData) => {
     const data = {
-      url: formData.get("url") as string,
+      officer: formData.get("officer") as string,
       campaign: formData.get("campaign") as string,
-      is_verified: formData.get("is_verified") === "on",
     }
     createMutation.mutate(data)
   }
 
-  const handleUpdateLink = (formData: FormData) => {
-    if (!editingLink) return
-    const data = {
-      id: editingLink.id,
-      url: formData.get("url") as string,
-      campaign: formData.get("campaign") as string,
-      is_verified: formData.get("is_verified") === "on",
-    }
-    updateMutation.mutate(data)
-  }
+  // Note: Link updates not supported - referral links are immutable after creation
 
   if (loading) {
     return (
@@ -121,8 +113,19 @@ export function AdminLinksPage() {
             </DialogHeader>
             <form action={handleCreateLink} className="space-y-4">
               <div>
-                <Label htmlFor="url">URL</Label>
-                <Input id="url" name="url" type="url" placeholder="https://example.com" required />
+                <Label htmlFor="officer">Officer</Label>
+                <Select name="officer" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose an officer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {officers.map((officer: any) => (
+                      <SelectItem key={officer.id} value={officer.id}>
+                        {officer.full_name} ({officer.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="campaign">Campaign</Label>
@@ -138,10 +141,6 @@ export function AdminLinksPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch id="is_verified" name="is_verified" />
-                <Label htmlFor="is_verified">Verified Link</Label>
               </div>
               <Button type="submit" className="w-full bg-[#00ff88] hover:bg-[#00e67a] text-black">
                 Create Link
@@ -189,20 +188,20 @@ export function AdminLinksPage() {
                     <div className="flex items-center gap-2">
                       <ExternalLink className="h-4 w-4" />
                       <a
-                        href={link.url}
+                        href={link.full_link}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline max-w-xs truncate"
                       >
-                        {link.url}
+                        {link.full_link}
                       </a>
                       <ExternalLink className="h-3 w-3" />
                     </div>
                   </TableCell>
                   <TableCell>{link.campaign?.name || "No Campaign"}</TableCell>
                   <TableCell>
-                    <Badge variant={link.is_verified ? "default" : "secondary"}>
-                      {link.is_verified ? "Verified" : "Unverified"}
+                    <Badge variant={link.is_active ? "default" : "secondary"}>
+                      {link.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                   <TableCell>{link.click_count || 0}</TableCell>
@@ -224,41 +223,48 @@ export function AdminLinksPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
+      {/* View Dialog */}
       <Dialog open={!!editingLink} onOpenChange={() => setEditingLink(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Link</DialogTitle>
+            <DialogTitle>Link Details</DialogTitle>
           </DialogHeader>
           {editingLink && (
-            <form action={handleUpdateLink} className="space-y-4">
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="edit_url">URL</Label>
-                <Input id="edit_url" name="url" type="url" defaultValue={editingLink.url} required />
+                <Label>Full Link</Label>
+                <Input value={editingLink.full_link} readOnly className="bg-gray-50" />
               </div>
               <div>
-                <Label htmlFor="edit_campaign">Campaign</Label>
-                <Select name="campaign" defaultValue={editingLink.campaign?.id} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a campaign" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {campaigns.map((campaign: any) => (
-                      <SelectItem key={campaign.id} value={campaign.id}>
-                        {campaign.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Reference Code</Label>
+                <Input value={editingLink.ref_code} readOnly className="bg-gray-50" />
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch id="edit_is_verified" name="is_verified" defaultChecked={editingLink.is_verified} />
-                <Label htmlFor="edit_is_verified">Verified Link</Label>
+              <div>
+                <Label>Officer</Label>
+                <Input value={editingLink.officer?.full_name || 'N/A'} readOnly className="bg-gray-50" />
               </div>
-              <Button type="submit" className="w-full bg-[#00ff88] hover:bg-[#00e67a] text-black">
-                Update Link
+              <div>
+                <Label>Campaign</Label>
+                <Input value={editingLink.campaign?.name || 'N/A'} readOnly className="bg-gray-50" />
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Badge variant={editingLink.is_active ? "default" : "secondary"} className="mt-2">
+                  {editingLink.is_active ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+              <div>
+                <Label>Created</Label>
+                <Input value={new Date(editingLink.created_at).toLocaleString()} readOnly className="bg-gray-50" />
+              </div>
+              <Button 
+                onClick={() => setEditingLink(null)} 
+                className="w-full" 
+                variant="outline"
+              >
+                Close
               </Button>
-            </form>
+            </div>
           )}
         </DialogContent>
       </Dialog>
