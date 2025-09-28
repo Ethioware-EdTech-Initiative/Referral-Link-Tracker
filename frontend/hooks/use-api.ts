@@ -365,3 +365,13 @@ export function useAllUsers() {
   const apiCall = useCallback(() => apiClient.getAllUsers(), [])
   return useApi(apiCall, [])
 }
+
+export function useAllOfficers() {
+  const apiCall = useCallback(() => apiClient.getAllOfficers(), [])
+  return useApi(apiCall, [])
+}
+
+export function useAllCampaigns() {
+  const apiCall = useCallback(() => apiClient.getAllCampaigns(), [])
+  return useApi(apiCall, [])
+}

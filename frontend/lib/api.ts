@@ -82,8 +82,17 @@ class ApiClient {
         return { data, status: response.status }
       } else {
         const errorData = await response.json().catch(() => ({}))
+
+        // Enhanced logging for 400 errors to see validation issues
+        if (response.status === 400) {
+          console.log('[API 400 ERROR] Full error response:', errorData)
+          console.log('[API 400 ERROR] URL:', url)
+          console.log('[API 400 ERROR] Method:', options.method)
+          console.log('[API 400 ERROR] Body:', options.body)
+        }
+
         return {
-          error: errorData.error || errorData.message || "Request failed",
+          error: errorData.error || errorData.message || JSON.stringify(errorData) || "Request failed",
           status: response.status,
         }
       }
@@ -205,6 +214,85 @@ class ApiClient {
         status: 500
       }
     }
+  }
+
+  async getAllOfficers(): Promise<ApiResponse<any[]>> {
+    try {
+      // Get all officers by fetching multiple pages
+      let allOfficers: any[] = []
+      let page = 1
+      let hasMore = true
+
+      while (hasMore) {
+        const response = await this.request<PaginatedResponse<any>>(`/alxET-rt-api/admin/admin-dash/officers/?page=${page}`)
+        if (response.error) {
+          return {
+            error: response.error,
+            status: response.status
+          }
+        }
+
+        allOfficers = [...allOfficers, ...(response.data?.results || [])]
+        hasMore = !!response.data?.next
+        page++
+      }
+
+      return {
+        data: allOfficers,
+        status: 200
+      }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Failed to fetch all officers",
+        status: 500
+      }
+    }
+  }
+
+  async getAllCampaigns(): Promise<ApiResponse<any[]>> {
+    try {
+      // Get all campaigns by fetching multiple pages
+      let allCampaigns: any[] = []
+      let page = 1
+      let hasMore = true
+
+      while (hasMore) {
+        const response = await this.request<PaginatedResponse<any>>(`/alxET-rt-api/admin/admin-dash/campaigns/?page=${page}`)
+        if (response.error) {
+          return {
+            error: response.error,
+            status: response.status
+          }
+        }
+
+        allCampaigns = [...allCampaigns, ...(response.data?.results || [])]
+        hasMore = !!response.data?.next
+        page++
+      }
+
+      return {
+        data: allCampaigns,
+        status: 200
+      }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Failed to fetch all campaigns",
+        status: 500
+      }
+    }
+  }
+
+  async updateAssignment(id: string, data: any): Promise<ApiResponse> {
+    // Remove id from the data object to avoid API conflicts
+    const { id: _, ...bodyData } = data
+
+    return this.request(`/alxET-rt-api/admin/admin-dash/assignments/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(bodyData),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
   }
 
   async getUserStats(): Promise<ApiResponse<{
@@ -389,14 +477,24 @@ class ApiClient {
   async updateCampaign(id: string, campaignData: any): Promise<ApiResponse<any>> {
     // Remove id from body data if it exists, since it's in the URL path
     const { id: _, ...bodyData } = campaignData
-    console.log('[API PATCH DEBUG] ID:', id)
-    console.log('[API PATCH DEBUG] Body data (after removing ID):', bodyData)
-    console.log('[API PATCH DEBUG] JSON body:', JSON.stringify(bodyData))
+
+    // Fix date formatting - ensure dates match API expected format (remove milliseconds)
+    if (bodyData.start_date) {
+      bodyData.start_date = new Date(bodyData.start_date).toISOString().replace(/\\.\\d{3}Z$/, 'Z')
+    }
+    if (bodyData.end_date) {
+      bodyData.end_date = new Date(bodyData.end_date).toISOString().replace(/\\.\\d{3}Z$/, 'Z')
+    }
+
+    // Remove debug logs in production
+    // console.log('[API PATCH DEBUG] ID:', id)
+    // console.log('[API PATCH DEBUG] Body data:', bodyData)
+
     const result = await this.request(`/alxET-rt-api/admin/admin-dash/campaigns/${id}/`, {
       method: "PATCH",
       body: JSON.stringify(bodyData),
     })
-    console.log('[API PATCH DEBUG] Response:', result)
+    // console.log('[API PATCH DEBUG] Response:', result)
     return result
   }
 

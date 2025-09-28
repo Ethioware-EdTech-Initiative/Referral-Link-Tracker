@@ -42,11 +42,11 @@ const navigation = [
 export function AdminSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { user, logout } = useAuth()
-  const { theme } = useTheme()
+  const { resolvedTheme } = useTheme()
   const router = useRouter()
   const pathname = usePathname()
 
-  const logoSrc = theme === 'dark' ? '/alx-logo-black variant.png' : '/alx-logo-black.png'
+  const logoSrc = resolvedTheme === 'dark' ? '/alx-logo.png' : '/alx-logo-black.png'
 
   const handleLogout = async () => {
     await logout()

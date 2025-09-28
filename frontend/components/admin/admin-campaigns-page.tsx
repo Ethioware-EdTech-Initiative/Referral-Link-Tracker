@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Edit, Trash2, Calendar } from "lucide-react"
-import { useCampaigns, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
+import { useAllCampaigns, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
 interface Campaign {
@@ -28,6 +28,7 @@ export function AdminCampaignsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
+  const [originalCampaign, setOriginalCampaign] = useState<Campaign | null>(null)
   const [deletingCampaign, setDeletingCampaign] = useState<Campaign | null>(null)
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
   const [newCampaign, setNewCampaign] = useState({
@@ -38,7 +39,19 @@ export function AdminCampaignsPage() {
     is_active: false,
   })
 
-  const { data: campaignsData, loading, error, refetch } = useCampaigns()
+  const { data: campaignsData, loading, error, refetch } = useAllCampaigns()
+
+  const campaigns = campaignsData || []
+
+  // Filter campaigns based on search term
+  const filteredCampaigns = campaigns.filter((campaign: Campaign) => {
+    if (!searchTerm) return true
+
+    return (
+      campaign.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  })
 
   const createMutation = useCreateMutation((data: any) => apiClient.createCampaign(data), {
     onSuccess: () => {
@@ -64,10 +77,26 @@ export function AdminCampaignsPage() {
       onSuccess: () => {
         refetch()
         setEditingCampaign(null)
+        setOriginalCampaign(null)
         setFormErrors({})
       },
       onError: (error: string) => {
-        setFormErrors({ general: error || "Failed to update campaign" })
+        console.log('[UPDATE ERROR]', error)
+        // Try to parse validation errors from API response
+        try {
+          const errorObj = JSON.parse(error)
+          if (errorObj.start_date) {
+            setFormErrors({ general: errorObj.start_date[0] })
+          } else if (errorObj.end_date) {
+            setFormErrors({ general: errorObj.end_date[0] })
+          } else if (errorObj.name) {
+            setFormErrors({ general: errorObj.name[0] })
+          } else {
+            setFormErrors({ general: error || "Failed to update campaign" })
+          }
+        } catch (e) {
+          setFormErrors({ general: error || "Failed to update campaign" })
+        }
       },
     },
   )
@@ -93,13 +122,7 @@ export function AdminCampaignsPage() {
     },
   })
 
-  const campaigns = campaignsData || []
 
-  const filteredCampaigns = campaigns.filter(
-    (campaign: Campaign) =>
-      campaign.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
 
   const handleCreateCampaign = () => {
     const errors: { [key: string]: string } = {}
@@ -128,7 +151,7 @@ export function AdminCampaignsPage() {
   }
 
   const handleUpdateCampaign = () => {
-    if (!editingCampaign) return
+    if (!editingCampaign || !originalCampaign) return
 
     const errors: { [key: string]: string } = {}
 
@@ -144,17 +167,68 @@ export function AdminCampaignsPage() {
     setFormErrors(errors)
     if (Object.keys(errors).length > 0) return
 
-    const data = {
-      name: (editingCampaign.name || "").trim(),
-      description: (editingCampaign.description || "").trim() || null, // Send null for empty descriptions as per API spec
-      start_date: editingCampaign.start_date ? new Date(editingCampaign.start_date).toISOString() : editingCampaign.start_date,
-      end_date: editingCampaign.end_date ? new Date(editingCampaign.end_date).toISOString() : editingCampaign.end_date,
-      is_active: editingCampaign.is_active,
+    // Only include fields that have actually changed
+    const data: any = {}
+
+    // Check each field for changes
+    const newName = (editingCampaign.name || "").trim()
+    const newDescription = (editingCampaign.description || "").trim() || null
+    const originalName = (originalCampaign.name || "").trim()
+    const originalDescription = (originalCampaign.description || "").trim() || null
+
+    if (newName !== originalName) {
+      data.name = newName
+    }
+
+    if (newDescription !== originalDescription) {
+      data.description = newDescription
+    }
+
+    // For dates, compare as strings to avoid format issues
+    const newStartDate = editingCampaign.start_date ? editingCampaign.start_date.split('T')[0] : ''
+    const newEndDate = editingCampaign.end_date ? editingCampaign.end_date.split('T')[0] : ''
+    const originalStartDate = originalCampaign.start_date ? originalCampaign.start_date.split('T')[0] : ''
+    const originalEndDate = originalCampaign.end_date ? originalCampaign.end_date.split('T')[0] : ''
+
+    if (newStartDate !== originalStartDate) {
+      // Check if trying to modify start_date of a past campaign
+      const originalStartDateObj = new Date(originalCampaign.start_date || '')
+      const now = new Date()
+      
+      if (originalCampaign.start_date && originalStartDateObj < now) {
+        setFormErrors({ general: "Cannot modify start date of campaigns that have already started" })
+        return
+      }
+      
+      data.start_date = editingCampaign.start_date ? new Date(editingCampaign.start_date).toISOString() : editingCampaign.start_date
+    }
+
+    if (newEndDate !== originalEndDate) {
+      data.end_date = editingCampaign.end_date ? new Date(editingCampaign.end_date).toISOString() : editingCampaign.end_date
+    }
+
+    if (editingCampaign.is_active !== originalCampaign.is_active) {
+      data.is_active = editingCampaign.is_active
+    }
+
+    // If no changes detected, don't send request
+    if (Object.keys(data).length === 0) {
+      setFormErrors({ general: "No changes detected" })
+      return
+    }
+
+    // Validate date relationship if both dates are being sent
+    if (data.start_date && data.end_date) {
+      const startDate = new Date(data.start_date)
+      const endDate = new Date(data.end_date)
+      
+      if (endDate <= startDate) {
+        setFormErrors({ general: "End date must be after start date" })
+        return
+      }
     }
 
     const dataWithId = { id: editingCampaign.id, ...data }
-    console.log('[PATCH DEBUG] Sending data:', dataWithId)
-    console.log('[PATCH DEBUG] Original campaign:', editingCampaign)
     updateMutation.mutate(dataWithId)
   }
 
@@ -374,7 +448,10 @@ export function AdminCampaignsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setEditingCampaign(campaign)}>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setEditingCampaign(campaign)
+                        setOriginalCampaign({ ...campaign })
+                      }}>
                         <Edit className="h-3 w-3" />
                       </Button>
                       <Button
@@ -395,7 +472,10 @@ export function AdminCampaignsPage() {
       </Card>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingCampaign} onOpenChange={() => setEditingCampaign(null)}>
+      <Dialog open={!!editingCampaign} onOpenChange={() => {
+        setEditingCampaign(null)
+        setOriginalCampaign(null)
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Campaign</DialogTitle>
@@ -449,15 +529,31 @@ export function AdminCampaignsPage() {
                     <p className="text-red-500 text-sm mt-1">{formErrors.description}</p>
                   )}
                 </div>
+
+                {/* Warning for past campaigns */}
+                {editingCampaign.start_date && new Date(editingCampaign.start_date) < new Date() && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <div className="flex items-center">
+                      <div className="text-yellow-600 text-sm">
+                        <strong>Note:</strong> This campaign has already started. The start date cannot be modified, but you can still update other fields.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="edit_start_date" className="flex items-center gap-1">
                       Start Date <span className="text-red-500">*</span>
+                      {editingCampaign.start_date && new Date(editingCampaign.start_date) < new Date() && (
+                        <span className="text-xs text-gray-500">(Read-only)</span>
+                      )}
                     </Label>
                     <Input
                       id="edit_start_date"
                       type="date"
                       value={(editingCampaign.start_date || "").split("T")[0] || ""}
+                      disabled={!!(editingCampaign.start_date && new Date(editingCampaign.start_date) < new Date())}
                       onChange={(e) => {
                         setEditingCampaign({ ...editingCampaign, start_date: e.target.value })
                         if (formErrors.start_date) {
@@ -510,6 +606,7 @@ export function AdminCampaignsPage() {
                   variant="outline"
                   onClick={() => {
                     setEditingCampaign(null)
+                    setOriginalCampaign(null)
                     setFormErrors({})
                   }}
                   className="flex-1"

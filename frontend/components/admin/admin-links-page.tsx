@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Edit, Trash2, ExternalLink } from "lucide-react"
-import { useAdminLinks, useCampaigns, useOfficers, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
+import { useAdminLinks, useAllCampaigns, useAllOfficers, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
 interface AdminLink {
@@ -40,8 +40,8 @@ export function AdminLinksPage() {
 
   const { data: linksData, loading, error, refetch } = useAdminLinks()
 
-  const { data: campaignsData } = useCampaigns()
-  const { data: officersData } = useOfficers()
+  const { data: campaignsData } = useAllCampaigns()
+  const { data: officersData } = useAllOfficers()
 
   const createMutation = useCreateMutation((data: any) => apiClient.createLink(data), {
     onSuccess: () => {

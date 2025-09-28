@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login, isAuthenticated } = useAuth()
+  const { resolvedTheme } = useTheme()
   const router = useRouter()
 
   useEffect(() => {
@@ -80,7 +82,11 @@ export default function LoginPage() {
 
         {/* Content - Centered */}
         <div className="relative z-10 flex flex-col items-center justify-center px-12 text-white text-center w-full">
-          <img src="/alx-logo-black.png" alt="ALX Logo" className="h-16 mb-6 filter invert mx-auto" />
+          <img
+            src={resolvedTheme === 'dark' ? '/alx-logo.png' : '/alx-logo-black.png'}
+            alt="ALX Logo"
+            className="h-16 mb-6 mx-auto"
+          />
           <h1 className="text-4xl font-bold mb-4">Recruitment Tracker</h1>
           <p className="text-lg text-slate-300 mb-6">
             Welcome back!<br />
@@ -103,7 +109,11 @@ export default function LoginPage() {
           <Card className="border-0 shadow-lg">
             <CardHeader className="text-center pb-6">
               <div className="mb-4 lg:hidden">
-                <img src="/alx-logo-black.png" alt="ALX Logo" className="h-8 mx-auto mb-4" />
+                <img
+                  src={resolvedTheme === 'dark' ? '/alx-logo.png' : '/alx-logo-black.png'}
+                  alt="ALX Logo"
+                  className="h-8 mx-auto mb-4"
+                />
               </div>
               <CardTitle className="text-2xl font-bold">Sign In To Your Account</CardTitle>
               <CardDescription className="text-muted-foreground">
