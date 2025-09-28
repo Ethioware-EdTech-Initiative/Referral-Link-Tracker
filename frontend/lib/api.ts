@@ -387,16 +387,26 @@ class ApiClient {
   }
 
   async updateCampaign(id: string, campaignData: any): Promise<ApiResponse<any>> {
-    return this.request(`/alxET-rt-api/admin/admin-dash/campaigns/${id}/`, {
+    // Remove id from body data if it exists, since it's in the URL path
+    const { id: _, ...bodyData } = campaignData
+    console.log('[API PATCH DEBUG] ID:', id)
+    console.log('[API PATCH DEBUG] Body data (after removing ID):', bodyData)
+    console.log('[API PATCH DEBUG] JSON body:', JSON.stringify(bodyData))
+    const result = await this.request(`/alxET-rt-api/admin/admin-dash/campaigns/${id}/`, {
       method: "PATCH",
-      body: JSON.stringify(campaignData),
+      body: JSON.stringify(bodyData),
     })
+    console.log('[API PATCH DEBUG] Response:', result)
+    return result
   }
 
   async deleteCampaign(id: string): Promise<ApiResponse> {
-    return this.request(`/alxET-rt-api/admin/admin-dash/campaigns/${id}/`, {
+    console.log('[API DELETE DEBUG] Deleting campaign ID:', id)
+    const result = await this.request(`/alxET-rt-api/admin/admin-dash/campaigns/${id}/`, {
       method: "DELETE",
     })
+    console.log('[API DELETE DEBUG] Delete response:', result)
+    return result
   }
 
   async getAssignments(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {

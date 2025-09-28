@@ -260,8 +260,10 @@ export function useDeleteMutation<TData = any>(
         if (response.error) {
           setError(response.error)
           options?.onError?.(response.error)
-        } else if (response.data !== undefined) {
-          options?.onSuccess?.(response.data)
+        } else {
+          // For DELETE operations, success is indicated by no error (even if data is undefined)
+          // DELETE typically returns 204 No Content, so data will be undefined
+          options?.onSuccess?.(response.data as TData)
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "An error occurred"
