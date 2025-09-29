@@ -8,7 +8,7 @@ def is_proxy_ip(ip):
     try:
         response = requests.get(url, timeout=2)
         data = response.json()
-        print(f"proxycheck.io response for {ip}: {data}")  # Debug log
+        print(f"proxycheck.io response for {ip}: {data}")
 
         ip_data = data.get(ip, {})
         print(ip_data)

@@ -1,7 +1,10 @@
 import requests
+import logging
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from django.utils.timezone import now
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from django.shortcuts import get_object_or_404, redirect
 from .serializers import SignupEventSerializer, ClickEventSerializer, FraudFindingsSerializer
@@ -11,8 +14,95 @@ from dashboard_service.models import ReferralLink
 from .models import ClickEvent, FraudFindings, SignupEvent
 from .utils import fraud_score_for_click_event, fraud_score_for_signup_event
 from rest_framework.generics import ListAPIView
+import re 
+from django.core.validators import validate_ipv4_address, validate_ipv6_address, ValidationError
+
+logger = logging.getLogger(__name__)
+
 
 SIGNUP_URL = "https://admissions.alxafrica.com/users/sign_up/"
+
+
+MAX_USER_AGENT_LENGTH = 500
+MAX_IP_REQUESTS_PER_MINUTE = 60
+MAX_REF_CODE_LENGTH = 70
+ALLOWED_DEBUG_VALUES = {'true', '1', 'yes'}
+
+def validate_and_sanitize_input(value, field_name, max_length=None):
+    """Comprehensive input validation and sanitization"""
+    if value is None:
+        return None
+
+    value = str(value).strip()
+
+    dangerous_patterns = [
+        r'<script[^>]*>.*?</script>',
+        r'javascript:',
+        r'vbscript:',
+        r'onload\s*=',
+        r'onerror\s*=',
+        r'<iframe[^>]*>',
+        r'<object[^>]*>',
+        r'<embed[^>]*>'
+    ]
+    
+    for pattern in dangerous_patterns:
+        if re.search(pattern, value, re.IGNORECASE):
+            logger.warning(f"Potentially malicious input detected in {field_name}: {value[:100]}")
+            raise ValidationError(f"Invalid {field_name} format")
+
+    if max_length and len(value) > max_length:
+        logger.warning(f"Input too long for {field_name}: {len(value)} chars")
+        value = value[:max_length]
+    
+    return value
+
+def validate_ip_address(ip):
+    """Enhanced IP address validation with logging"""
+    if not ip:
+        return False
+        
+    try:
+        ip = ip.strip()
+        if not settings.DEBUG:
+            private_patterns = [
+                r'^127\.',      
+                r'^192\.168\.', 
+                r'^10\.',   
+                r'^172\.(1[6-9]|2[0-9]|3[0-1])\.' 
+            ]
+            for pattern in private_patterns:
+                if re.match(pattern, ip):
+                    logger.info(f"Private IP detected: {ip}")
+        
+        validate_ipv4_address(ip)
+        return True
+    except ValidationError:
+        try:
+            validate_ipv6_address(ip)
+            return True
+        except ValidationError:
+            logger.warning(f"Invalid IP address format: {ip}")
+            return False
+
+def sanitize_user_agent(user_agent):
+    """Enhanced user agent sanitization with security checks"""
+    if not user_agent:
+        return ''
+
+    user_agent = validate_and_sanitize_input(
+        user_agent, 
+        'user_agent', 
+        MAX_USER_AGENT_LENGTH
+    )
+    
+    cleaned = re.sub(r'[<>"\'\(\);\\]', '', user_agent)
+    
+
+    cleaned = re.sub(r'(script|javascript|vbscript|data:|javascript:)', 
+                    '', cleaned, flags=re.IGNORECASE)
+    
+    return cleaned
 
 
 def get_client_ip(request):
@@ -32,10 +122,31 @@ def get_geolocation(ip):
         print(f"Geo lookup failed: {e}")
     return None, None, None
 
+
+class TrackingThrottle(AnonRateThrottle):
+    rate = '100/hour'
+    
+    def get_cache_key(self, request, view):
+        ip = get_client_ip(request)
+        if not ip:
+            return None
+        user_agent_hash = hash(request.META.get('HTTP_USER_AGENT', ''))
+        return f"throttle_anon_{ip}_{user_agent_hash}"
+
+class AdminRateThrottle(UserRateThrottle):
+    rate = '1000/hour'
+
+class SignupThrottle(AnonRateThrottle):
+    rate = '10/minute'
+
+
 class TrackClickView(APIView):
     """
     Handles referral link clicks also device tracking...
     """
+    permission_classes = [AllowAny]
+    throttle_classes = [TrackingThrottle]
+    
     @extend_schema(
         parameters=[
             OpenApiParameter(name="ref_code", location=OpenApiParameter.PATH, type=str),
@@ -47,8 +158,11 @@ class TrackClickView(APIView):
         referral_link = get_object_or_404(ReferralLink, ref_code=ref_code)
         ip = get_client_ip(request)
         country, city, region = get_geolocation(ip)
-        user_agent =request.META.get('HTTP_USER_AGENT', '')
+        raw_user_agent = request.META.get('HTTP_USER_AGENT', '')
+        user_agent = sanitize_user_agent(raw_user_agent)
         
+        
+        ref_code = validate_and_sanitize_input(ref_code, "ref_code", MAX_REF_CODE_LENGTH)
         fraud_score = fraud_score_for_click_event(ip, user_agent, referral_link)
 
         click = ClickEvent.objects.create(
@@ -74,6 +188,7 @@ class TrackClickView(APIView):
         if request.GET.get("debug") == "true":
             return Response(ClickEventSerializer(click).data, status=status.HTTP_201_CREATED)
         return redirect(f"{SIGNUP_URL}?ref_code={referral_link.ref_code}&click_event_id={click.id}")
+
 
 
 class SignupEventView(APIView):

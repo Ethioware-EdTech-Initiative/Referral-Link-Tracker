@@ -121,8 +121,6 @@ class TestTrackClickView(APITestCase):
 
         self.assertEqual(response.status_code, 404)
 
-
-
     @patch('tracking_service.views.get_geolocation')
     @patch('tracking_service.views.fraud_score_for_click_event')
     def test_track_click_geolocation_failure(self, mock_fraud_score, mock_geolocation):
@@ -211,7 +209,7 @@ class TestSignupEventView(APITestCase):
     @patch('tracking_service.views.fraud_score_for_signup_event')
     def test_signup_event_high_fraud_score(self, mock_fraud_score):
         """Test that high fraud score creates FraudFindings record"""
-        mock_fraud_score.return_value = 9.0  # High score
+        mock_fraud_score.return_value = 9.0
 
         data = {
             'refcode': self.referral_link.ref_code,
