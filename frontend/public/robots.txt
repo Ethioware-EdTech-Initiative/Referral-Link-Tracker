@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and officer areas from search engines for security
+Disallow: /admin/
+Disallow: /officer/
+Disallow: /login
+
+# Allow public assets
+Allow: /alx-logo.png
+Allow: /alx-logo-black.png
+
+Sitemap: https://referral-link-tracker.vercel.app/sitemap.xml

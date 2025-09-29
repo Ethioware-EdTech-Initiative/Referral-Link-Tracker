@@ -9,9 +9,76 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
-  title: "ALX-ET Recruitment Tracker",
-  description: "ALX Ethiopia Recruitment Tracking System",
-  generator: "v0.app",
+  title: {
+    default: "ALX Ethiopia - Recruitment Tracker Portal",
+    template: "%s | ALX Ethiopia Recruitment Tracker"
+  },
+  description: "ALX Ethiopia's comprehensive recruitment tracking system for managing referral campaigns, monitoring officer performance, and tracking recruitment metrics. Streamline your recruitment process with real-time analytics and campaign management.",
+  keywords: [
+    "ALX Ethiopia",
+    "recruitment tracker",
+    "referral system",
+    "campaign management",
+    "recruitment analytics",
+    "performance tracking",
+    "ALX ET",
+    "recruitment portal"
+  ],
+  authors: [
+    {
+      name: "ALX Ethiopia",
+      url: "https://alx.com"
+    }
+  ],
+  creator: "ALX Ethiopia",
+  publisher: "ALX Ethiopia",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://referral-link-tracker.vercel.app'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: "ALX Ethiopia - Recruitment Tracker Portal",
+    description: "Comprehensive recruitment tracking system for managing referral campaigns and monitoring performance with real-time analytics.",
+    url: 'https://referral-link-tracker.vercel.app',
+    siteName: 'ALX Ethiopia Recruitment Tracker',
+    locale: 'en_US',
+    type: 'website',
+    images: [
+      {
+        url: '/alx-logo.png',
+        width: 1400,
+        height: 530,
+        alt: 'ALX Ethiopia Recruitment Tracker',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ALX Ethiopia - Recruitment Tracker Portal',
+    description: 'Comprehensive recruitment tracking system for managing referral campaigns and monitoring performance.',
+    images: ['/alx-logo.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'google-verification-code', // Replace with actual verification code when available
+  },
 }
 
 export default function RootLayout({
