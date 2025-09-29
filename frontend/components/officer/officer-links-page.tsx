@@ -17,7 +17,7 @@ export function OfficerLinksPage() {
   const links = (linksData as any)?.results || (Array.isArray(linksData) ? linksData : [])
 
   const filteredLinks = links?.filter((link: any) => {
-    const matchesSearch = 
+    const matchesSearch =
       link.ref_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       link.campaign?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       false

@@ -1,6 +1,8 @@
 "use client"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { useAdminMetrics, useAdminStats } from "@/hooks/use-api"
 import { formatDate } from "@/lib/api-utils"
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from "recharts"
@@ -15,12 +17,43 @@ import {
   Activity,
   UserCheck,
   Link,
+  RefreshCw,
 } from "lucide-react"
 
 export function AdminDashboard() {
   const router = useRouter()
-  const { data: metricsData, loading: metricsLoading, error: metricsError } = useAdminMetrics()
-  const { data: statsData, loading: statsLoading, error: statsError } = useAdminStats()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastRefresh, setLastRefresh] = useState(new Date())
+
+  const { data: metricsData, loading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useAdminMetrics()
+  const { data: statsData, loading: statsLoading, error: statsError, refetch: refetchStats } = useAdminStats()
+
+  // Auto-refresh data every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      await Promise.all([
+        refetchMetrics?.(),
+        refetchStats?.()
+      ])
+      setLastRefresh(new Date())
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [refetchMetrics, refetchStats])
+
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([
+        refetchMetrics?.(),
+        refetchStats?.()
+      ])
+      setLastRefresh(new Date())
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   if (metricsLoading || statsLoading) {
     return (
@@ -83,9 +116,21 @@ export function AdminDashboard() {
           <h1 className="text-3xl font-bold text-balance">Admin Dashboard</h1>
           <p className="text-muted-foreground">System overview and management controls</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4" />
-          {formatDate(new Date().toISOString())}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            Last updated: {formatDate(lastRefresh.toISOString())}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
       </div>
 

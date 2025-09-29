@@ -387,6 +387,24 @@ export function useAllOfficers() {
   return useApi(apiCall, [])
 }
 
+// Specific hook for assignment page that ensures only officers are returned
+export function useOfficersForAssignment() {
+  const { data: officersData, loading, error, refetch } = useApi(
+    useCallback(() => apiClient.getAllOfficers(), []),
+    []
+  )
+
+  // Filter to ensure only officers (non-staff users) are returned
+  const officers = officersData?.filter((user: any) => !user.is_staff) || []
+
+  return {
+    data: officers,
+    loading,
+    error,
+    refetch
+  }
+}
+
 export function useAllCampaigns() {
   const apiCall = useCallback(() => apiClient.getAllCampaigns(), [])
   return useApi(apiCall, [])

@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Trash2, Users, Target, Calendar, Edit } from "lucide-react"
 import { useTheme } from "next-themes"
-import { useAssignments, useAllOfficers, useAllCampaigns, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
+import { useAssignments, useOfficersForAssignment, useAllCampaigns, useCreateMutation, useUpdateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
 interface Assignment {
@@ -37,7 +37,7 @@ export function AdminAssignmentsPage() {
   })
 
   const { data: assignmentsData, loading, error, refetch } = useAssignments()
-  const { data: officersData } = useAllOfficers()
+  const { data: officersData } = useOfficersForAssignment()
   const { data: campaignsData } = useAllCampaigns()
 
   const createMutation = useCreateMutation((data: any) => apiClient.createAssignment(data), {
