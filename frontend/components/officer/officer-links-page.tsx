@@ -11,15 +11,20 @@ import { Link, ExternalLink, Search, Plus, CheckCircle, XCircle, Calendar } from
 
 export function OfficerLinksPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState<"all" | "verified" | "unverified">("all")
-  const { data: links, loading, error, refetch } = useOfficerLinks()
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all")
+  const { data: linksData, loading, error, refetch } = useOfficerLinks()
 
-  const filteredLinks = links?.filter((link) => {
-    const matchesSearch = link.url?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false
+  const links = (linksData as any)?.results || (Array.isArray(linksData) ? linksData : [])
+
+  const filteredLinks = links?.filter((link: any) => {
+    const matchesSearch = 
+      link.ref_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.campaign?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false
     const matchesFilter =
       filterStatus === "all" ||
-      (filterStatus === "verified" && link.is_verified) ||
-      (filterStatus === "unverified" && !link.is_verified)
+      (filterStatus === "active" && link.is_active) ||
+      (filterStatus === "inactive" && !link.is_active)
     return matchesSearch && matchesFilter
   })
 
@@ -37,16 +42,16 @@ export function OfficerLinksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-balance">My Referral Links</h1>
-          <p className="text-muted-foreground">Manage and track your referral links</p>
+          <p className="text-muted-foreground">View and track your assigned referral links</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Link
-        </Button>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4" />
+          {formatDate(new Date().toISOString())}
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -62,8 +67,8 @@ export function OfficerLinksPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Verified Links</p>
-                <p className="text-2xl font-bold">{links?.filter((link) => link.is_verified).length || 0}</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Links</p>
+                <p className="text-2xl font-bold">{links?.filter((link: any) => link.is_active).length || 0}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
@@ -73,8 +78,19 @@ export function OfficerLinksPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Links</p>
-                <p className="text-2xl font-bold">{links?.filter((link) => !link.is_verified).length || 0}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Clicks</p>
+                <p className="text-2xl font-bold">{links?.reduce((sum: number, link: any) => sum + (link.click_count || 0), 0) || 0}</p>
+              </div>
+              <ExternalLink className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Signups</p>
+                <p className="text-2xl font-bold">{links?.reduce((sum: number, link: any) => sum + (link.signup_count || 0), 0) || 0}</p>
               </div>
               <XCircle className="h-8 w-8 text-orange-600" />
             </div>
@@ -109,18 +125,18 @@ export function OfficerLinksPage() {
                 All
               </Button>
               <Button
-                variant={filterStatus === "verified" ? "default" : "outline"}
-                onClick={() => setFilterStatus("verified")}
+                variant={filterStatus === "active" ? "default" : "outline"}
+                onClick={() => setFilterStatus("active")}
                 size="sm"
               >
-                Verified
+                Active
               </Button>
               <Button
-                variant={filterStatus === "unverified" ? "default" : "outline"}
-                onClick={() => setFilterStatus("unverified")}
+                variant={filterStatus === "inactive" ? "default" : "outline"}
+                onClick={() => setFilterStatus("inactive")}
                 size="sm"
               >
-                Pending
+                Inactive
               </Button>
             </div>
           </div>
@@ -140,21 +156,32 @@ export function OfficerLinksPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>URL</TableHead>
+                  <TableHead>Ref Code</TableHead>
+                  <TableHead>Campaign</TableHead>
+                  <TableHead>Performance</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLinks.map((link) => (
+                {filteredLinks.map((link: any) => (
                   <TableRow key={link.id}>
                     <TableCell>
-                      <div className="max-w-xs truncate font-medium">{link.url}</div>
+                      <div className="font-medium">{link.ref_code}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={link.is_verified ? "default" : "secondary"}>
-                        {link.is_verified ? "Verified" : "Pending"}
+                      <div className="max-w-xs truncate">{link.campaign?.name || 'N/A'}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div>{link.click_count || 0} clicks</div>
+                        <div className="text-muted-foreground">{link.signup_count || 0} signups</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={link.is_active ? "default" : "secondary"}>
+                        {link.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -165,7 +192,7 @@ export function OfficerLinksPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="ghost" asChild>
-                        <a href={link.url} target="_blank" rel="noopener noreferrer">
+                        <a href={link.full_link} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </Button>
@@ -181,12 +208,8 @@ export function OfficerLinksPage() {
               <p className="text-muted-foreground mb-4">
                 {searchTerm || filterStatus !== "all"
                   ? "Try adjusting your search or filter criteria"
-                  : "Start by creating your first referral link"}
+                  : "You don't have any referral links assigned yet. Contact your administrator to get started."}
               </p>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Link
-              </Button>
             </div>
           )}
         </CardContent>

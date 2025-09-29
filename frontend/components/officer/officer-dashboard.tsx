@@ -2,16 +2,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useOfficerClicks, useOfficerLinks } from "@/hooks/use-api"
+import { useOfficerStats, useOfficerCampaignStats, useOfficerTimelineStats, useOfficerLinks } from "@/hooks/use-api"
 import { formatDate } from "@/lib/api-utils"
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
-import { MousePointer, CheckCircle, XCircle, TrendingUp, Link, Calendar, ExternalLink } from "lucide-react"
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from "recharts"
+import { MousePointer, CheckCircle, Users, TrendingUp, Link, Calendar, ExternalLink, Target, Activity } from "lucide-react"
 
 export function OfficerDashboard() {
-  const { data: clicksData, loading: clicksLoading, error: clicksError } = useOfficerClicks()
+  const { data: statsData, loading: statsLoading, error: statsError } = useOfficerStats()
+  const { data: campaignStatsData, loading: campaignLoading, error: campaignError } = useOfficerCampaignStats()
+  const { data: timelineData, loading: timelineLoading, error: timelineError } = useOfficerTimelineStats()
   const { data: linksData, loading: linksLoading, error: linksError } = useOfficerLinks()
 
-  if (clicksLoading || linksLoading) {
+  const isLoading = statsLoading || campaignLoading || timelineLoading || linksLoading
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -19,34 +23,45 @@ export function OfficerDashboard() {
     )
   }
 
+  // Extract metrics from stats data
+  const linksResults = (linksData as any)?.results || (Array.isArray(linksData) ? linksData : [])
+  const totalLinks = linksResults?.length || 0
+  const activeLinks = linksResults?.filter((link: any) => link.is_active).length || 0
+  const totalClicks = linksResults?.reduce((sum: number, link: any) => sum + (link.click_count || 0), 0) || 0
+  const totalSignups = linksResults?.reduce((sum: number, link: any) => sum + (link.signup_count || 0), 0) || 0
+
   const metrics = [
     {
       title: "Total Clicks",
-      value: clicksData?.total_clicks || 0,
+      value: totalClicks,
       icon: MousePointer,
       color: "text-blue-600",
       bgColor: "bg-blue-50 dark:bg-blue-950",
+      change: statsData?.click_change || null,
     },
     {
-      title: "Verified Clicks",
-      value: clicksData?.verified_clicks || 0,
-      icon: CheckCircle,
+      title: "Total Signups", 
+      value: totalSignups,
+      icon: Users,
       color: "text-green-600",
       bgColor: "bg-green-50 dark:bg-green-950",
-    },
-    {
-      title: "Unverified Clicks",
-      value: clicksData?.unverified_clicks || 0,
-      icon: XCircle,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50 dark:bg-orange-950",
+      change: statsData?.signup_change || null,
     },
     {
       title: "Active Links",
-      value: linksData?.length || 0,
+      value: activeLinks,
       icon: Link,
-      color: "text-purple-600",
+      color: "text-purple-600", 
       bgColor: "bg-purple-50 dark:bg-purple-950",
+      change: null,
+    },
+    {
+      title: "Conversion Rate",
+      value: totalClicks > 0 ? `${((totalSignups / totalClicks) * 100).toFixed(1)}%` : "0%",
+      icon: Target,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50 dark:bg-orange-950",
+      change: statsData?.conversion_change || null,
     },
   ]
 
@@ -72,7 +87,14 @@ export function OfficerDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{metric.title}</p>
-                  <p className="text-2xl font-bold">{metric.value.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">
+                    {typeof metric.value === 'string' ? metric.value : metric.value.toLocaleString()}
+                  </p>
+                  {metric.change && (
+                    <p className={`text-xs ${metric.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {metric.change > 0 ? '↗' : '↘'} {Math.abs(metric.change)}% from last week
+                    </p>
+                  )}
                 </div>
                 <div className={`p-3 rounded-full ${metric.bgColor}`}>
                   <metric.icon className={`h-6 w-6 ${metric.color}`} />
@@ -84,19 +106,19 @@ export function OfficerDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Clicks Chart */}
+        {/* Performance Timeline */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Weekly Click Trends
+              Performance Timeline
             </CardTitle>
-            <CardDescription>Your click performance over the past week</CardDescription>
+            <CardDescription>Your activity over time</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={clicksData?.weekly_clicks || []}>
+                <LineChart data={timelineData || []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="date"
@@ -107,14 +129,21 @@ export function OfficerDashboard() {
                   <YAxis />
                   <Tooltip
                     labelFormatter={(value) => formatDate(value)}
-                    formatter={(value: number) => [value, "Clicks"]}
+                    formatter={(value: number, name: string) => [value, name === 'clicks' ? 'Clicks' : 'Signups']}
                   />
                   <Line
                     type="monotone"
                     dataKey="clicks"
                     stroke="#3b82f6"
                     strokeWidth={2}
-                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                    name="clicks"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="signups"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    name="signups"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -133,35 +162,71 @@ export function OfficerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {linksData?.slice(0, 5).map((link) => (
+              {linksResults?.slice(0, 5).map((link: any) => (
                 <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{link.url}</p>
+                    <p className="text-sm font-medium truncate">{link.ref_code}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(link.created_at)}</p>
+                    <div className="flex gap-4 text-xs text-muted-foreground mt-1">
+                      <span>{link.click_count || 0} clicks</span>
+                      <span>{link.signup_count || 0} signups</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={link.is_verified ? "default" : "secondary"}>
-                      {link.is_verified ? "Verified" : "Pending"}
+                    <Badge variant={link.is_active ? "default" : "secondary"}>
+                      {link.is_active ? "Active" : "Inactive"}
                     </Badge>
                     <Button size="sm" variant="ghost" asChild>
-                      <a href={link.url} target="_blank" rel="noopener noreferrer">
+                      <a href={link.full_link} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     </Button>
                   </div>
                 </div>
               ))}
-              {(!linksData || linksData.length === 0) && (
+              {(!linksResults || linksResults.length === 0) && (
                 <div className="text-center py-8 text-muted-foreground">
                   <Link className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No links created yet</p>
-                  <p className="text-sm">Start creating referral links to track your performance</p>
+                  <p className="text-sm">Contact your administrator to get referral links assigned</p>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Campaign Performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Campaign Performance
+          </CardTitle>
+          <CardDescription>Performance breakdown by campaign</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={campaignStatsData || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="campaign_name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="clicks" fill="#3b82f6" name="Clicks" />
+                <Bar dataKey="signups" fill="#10b981" name="Signups" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {(!campaignStatsData || campaignStatsData.length === 0) && (
+            <div className="text-center py-8 text-muted-foreground">
+              <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No campaign data available</p>
+              <p className="text-sm">Campaign performance will appear here once you have active links</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Performance Summary */}
       <Card>
@@ -173,36 +238,33 @@ export function OfficerDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {clicksData?.total_clicks
-                  ? Math.round((clicksData.verified_clicks / clicksData.total_clicks) * 100)
-                  : 0}
-                %
+                {totalClicks > 0 ? Math.round((totalSignups / totalClicks) * 100) : 0}%
               </div>
-              <p className="text-sm text-muted-foreground">Verification Rate</p>
+              <p className="text-sm text-muted-foreground">Conversion Rate</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {linksData?.filter((link) => link.is_verified).length || 0}
+                {activeLinks}
               </div>
-              <p className="text-sm text-muted-foreground">Verified Links</p>
+              <p className="text-sm text-muted-foreground">Active Links</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {clicksData?.weekly_clicks?.reduce((sum, day) => sum + day.clicks, 0) || 0}
+                {totalLinks}
               </div>
-              <p className="text-sm text-muted-foreground">This Week's Clicks</p>
+              <p className="text-sm text-muted-foreground">Total Links</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Error States */}
-      {(clicksError || linksError) && (
+      {(statsError || campaignError || timelineError || linksError) && (
         <Card className="border-destructive">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 text-destructive">
-              <XCircle className="h-5 w-5" />
-              <p>Error loading dashboard data: {clicksError || linksError}</p>
+              <CheckCircle className="h-5 w-5" />
+              <p>Error loading dashboard data: {statsError || campaignError || timelineError || linksError}</p>
             </div>
           </CardContent>
         </Card>

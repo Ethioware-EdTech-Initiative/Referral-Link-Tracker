@@ -557,20 +557,30 @@ class ApiClient {
   }
 
   // Officer dashboard endpoints
-  async getOfficerClicks(): Promise<
-    ApiResponse<{
-      total_clicks: number
-      verified_clicks: number
-      unverified_clicks: number
-      weekly_clicks: Array<{ date: string; clicks: number }>
-    }>
-  > {
+  async getOfficerStats(): Promise<ApiResponse<any>> {
     return this.request("/alxET-rt-api/officer/officer-dash/stats/")
+  }
+
+  async getOfficerCampaignStats(): Promise<ApiResponse<any>> {
+    return this.request("/alxET-rt-api/officer/officer-dash/stats/campaigns/")
+  }
+
+  async getOfficerTimelineStats(): Promise<ApiResponse<any>> {
+    return this.request("/alxET-rt-api/officer/officer-dash/stats/timeline/")
   }
 
   async getOfficerLinks(page?: number): Promise<ApiResponse<PaginatedResponse<any>>> {
     const params = page ? `?page=${page}` : ""
     return this.request(`/alxET-rt-api/officer/officer-dash/links/${params}`)
+  }
+
+  async getOfficerLinkDetails(id: string): Promise<ApiResponse<any>> {
+    return this.request(`/alxET-rt-api/officer/officer-dash/links/${id}/`)
+  }
+
+  // Legacy method for backward compatibility
+  async getOfficerClicks(): Promise<ApiResponse<any>> {
+    return this.getOfficerStats()
   }
 
   // Tracking endpoints

@@ -293,6 +293,22 @@ export function useAdminStats() {
   return useApi(apiCall, [])
 }
 
+export function useOfficerStats() {
+  const apiCall = useCallback(() => apiClient.getOfficerStats(), [])
+  return useApi(apiCall, [])
+}
+
+export function useOfficerCampaignStats() {
+  const apiCall = useCallback(() => apiClient.getOfficerCampaignStats(), [])
+  return useApi(apiCall, [])
+}
+
+export function useOfficerTimelineStats() {
+  const apiCall = useCallback(() => apiClient.getOfficerTimelineStats(), [])
+  return useApi(apiCall, [])
+}
+
+// Legacy hook for backward compatibility
 export function useOfficerClicks() {
   const apiCall = useCallback(() => apiClient.getOfficerClicks(), [])
   return useApi(apiCall, [])
