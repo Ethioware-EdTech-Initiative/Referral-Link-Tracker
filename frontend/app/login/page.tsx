@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, AlertCircle } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Eye, EyeOff, AlertCircle, Mail } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { ThemeToggleSimple } from "@/components/theme-toggle-simple"
 
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login, isAuthenticated } = useAuth()
@@ -36,7 +38,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await login(email, password)
+      const result = await login(email, password, rememberMe)
       if (!result.success) {
         setError(result.error || "Login failed")
       }
@@ -83,7 +85,7 @@ export default function LoginPage() {
         {/* Content - Centered */}
         <div className="relative z-10 flex flex-col items-center justify-center px-12 text-white text-center w-full">
           <img
-            src={resolvedTheme === 'dark' ? '/alx-logo.png' : '/alx-logo-black.png'}
+            src="/alx-logo.png"
             alt="ALX Logo"
             className="h-16 mb-6 mx-auto"
           />
@@ -171,16 +173,15 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="remember" className="rounded border-gray-300" />
-                    <Label htmlFor="remember" className="text-sm text-muted-foreground">
-                      Remember me
-                    </Label>
-                  </div>
-                  <Button variant="link" className="px-0 text-sm text-primary">
-                    Forgot password?
-                  </Button>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  />
+                  <Label htmlFor="remember" className="text-sm text-muted-foreground">
+                    Remember me
+                  </Label>
                 </div>
 
                 <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90" disabled={isLoading}>
@@ -197,8 +198,11 @@ export default function LoginPage() {
 
               <div className="mt-6 text-center text-sm text-muted-foreground">
                 <p>Need help accessing your account?</p>
-                <Button variant="link" className="px-0 text-sm">
-                  Contact Administrator
+                <Button variant="link" className="px-0 text-sm" asChild>
+                  <a href="mailto:admin@alx.com?subject=Login%20Support%20Request" className="inline-flex items-center space-x-1">
+                    <Mail className="h-3 w-3" />
+                    <span>Contact Administrator</span>
+                  </a>
                 </Button>
               </div>
             </CardContent>

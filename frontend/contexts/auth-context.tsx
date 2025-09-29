@@ -11,7 +11,7 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   role: "admin" | "officer" | null
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -140,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string, rememberMe = false): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true)
       console.log("[v0] Attempting login for:", email)
@@ -206,14 +206,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (tokens) {
-          console.log("[v0] Setting tokens:", { hasAccess: !!tokens.access, hasRefresh: !!tokens.refresh })
+          console.log("[v0] Setting tokens:", { hasAccess: !!tokens.access, hasRefresh: !!tokens.refresh, rememberMe })
 
           // Validate token content before storing
           const preValidation = TokenManager.decodeToken(tokens.access)
           console.log("[v0] Pre-storage token validation:", preValidation)
           console.log("[v0] Pre-storage is_staff value:", preValidation?.is_staff)
 
-          TokenManager.setTokens(tokens)
+          TokenManager.setTokens(tokens, rememberMe)
 
           // Create user data - try from userInfo first, then extract from token
           let userData: User | null = null

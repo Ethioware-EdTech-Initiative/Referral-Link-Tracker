@@ -28,6 +28,7 @@ export interface DecodedToken {
 // Secure token storage with encryption
 const TOKEN_KEY = "alx_et_tokens"
 const REFRESH_KEY = "alx_et_refresh"
+const REMEMBER_ME_KEY = "alx_et_remember"
 
 export class TokenManager {
   private static encrypt(data: string): string {
@@ -43,16 +44,30 @@ export class TokenManager {
     }
   }
 
-  static setTokens(tokens: AuthTokens): void {
+  static setTokens(tokens: AuthTokens, rememberMe = false): void {
     if (typeof window !== "undefined") {
-      localStorage.setItem(TOKEN_KEY, this.encrypt(tokens.access))
-      localStorage.setItem(REFRESH_KEY, this.encrypt(tokens.refresh))
+      const storage = rememberMe ? localStorage : sessionStorage
+      storage.setItem(TOKEN_KEY, this.encrypt(tokens.access))
+      storage.setItem(REFRESH_KEY, this.encrypt(tokens.refresh))
+
+      // Store remember me preference
+      localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe))
     }
+  }
+
+  static getRememberMePreference(): boolean {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(REMEMBER_ME_KEY) === "true"
+    }
+    return false
   }
 
   static getAccessToken(): string | null {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem(TOKEN_KEY)
+      // Check both localStorage and sessionStorage based on remember me preference
+      const rememberMe = this.getRememberMePreference()
+      const storage = rememberMe ? localStorage : sessionStorage
+      const token = storage.getItem(TOKEN_KEY)
       return token ? this.decrypt(token) : null
     }
     return null
@@ -60,7 +75,10 @@ export class TokenManager {
 
   static getRefreshToken(): string | null {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem(REFRESH_KEY)
+      // Check both localStorage and sessionStorage based on remember me preference
+      const rememberMe = this.getRememberMePreference()
+      const storage = rememberMe ? localStorage : sessionStorage
+      const token = storage.getItem(REFRESH_KEY)
       return token ? this.decrypt(token) : null
     }
     return null
@@ -68,8 +86,12 @@ export class TokenManager {
 
   static removeTokens(): void {
     if (typeof window !== "undefined") {
+      // Remove from both storage types to ensure complete cleanup
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(REFRESH_KEY)
+      localStorage.removeItem(REMEMBER_ME_KEY)
+      sessionStorage.removeItem(TOKEN_KEY)
+      sessionStorage.removeItem(REFRESH_KEY)
     }
   }
 

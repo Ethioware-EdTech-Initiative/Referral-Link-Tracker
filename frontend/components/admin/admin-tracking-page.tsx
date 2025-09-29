@@ -163,7 +163,7 @@ export function AdminTrackingPage() {
         if (fraudSearchTerm) {
             matchesSearch =
                 finding.event_id.toLowerCase().includes(fraudSearchTerm.toLowerCase()) ||
-                finding.findings_details?.toLowerCase().includes(fraudSearchTerm.toLowerCase())
+                (finding.findings_details?.toLowerCase().includes(fraudSearchTerm.toLowerCase()) ?? false)
         }
 
         if (fraudScoreFilter !== "all") {
