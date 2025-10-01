@@ -243,18 +243,18 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     
-    # 'DEFAULT_THROTTLE_CLASSES': [
-    #     'rest_framework.throttling.UserRateThrottle',
-    #     'rest_framework.throttling.AnonRateThrottle',
-    # ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
     
-    # 'DEFAULT_THROTTLE_RATES': {
-    #     'user': '1000000/minute',           # original: '3/minute'
-    #     'anon': '1000000/minute',           # original: '3/minute'
-    #     'admin_moderate': '1000000/minute', # original: '30/minute'
-    #     'admin_strict': '1000000/minute',   # original: '10/minute'
-    #     'officer_light': '1000000/minute',  # original: '60/minute'
-    # },
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '1000000/minute',           # original: '3/minute'
+        'anon': '1000000/minute',           # original: '3/minute'
+        'admin_moderate': '1000000/minute', # original: '30/minute'
+        'admin_strict': '1000000/minute',   # original: '10/minute'
+        'officer_light': '1000000/minute',  # original: '60/minute'
+    },
     
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
