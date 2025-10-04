@@ -95,84 +95,99 @@ export function AdminSettingsPage() {
             </div>
 
             <div className="space-y-6">
-                    {/* Profile Information */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <User className="h-5 w-5" />
-                                Administrator Profile
-                            </CardTitle>
-                            <CardDescription>Your account details and administrative information.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
+                {/* Profile Information */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <User className="h-5 w-5" />
+                            Administrator Profile
+                        </CardTitle>
+                        <CardDescription>Your account details and administrative information.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email Address</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                    <Input id="email" value={user?.email || ""} disabled className="pl-10" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="fullName">Full Name</Label>
+                                <Input id="fullName" value={user?.full_name || ""} disabled placeholder="Not set" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>Role</Label>
+                                <div className="pt-1">
+                                    <Badge variant="default" className="bg-blue-600">
+                                        {user?.is_staff ? "System Administrator" : "Officer"}
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Status</Label>
+                                <div className="pt-1">
+                                    <Badge variant={user?.is_active ? "default" : "secondary"}>
+                                        {user?.is_active ? "Active" : "Inactive"}
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Member Since</Label>
+                                <Input
+                                    value={user?.date_joined ? new Date(user.date_joined).toLocaleDateString() : "Unknown"}
+                                    disabled
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Change Password */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Lock className="h-5 w-5" />
+                            Change Password
+                        </CardTitle>
+                        <CardDescription>Update your password to keep your account secure.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handlePasswordChange} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="currentPassword">Current Password</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="currentPassword"
+                                        type={showCurrentPassword ? "text" : "password"}
+                                        value={passwordForm.currentPassword}
+                                        onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                                        required
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                    >
+                                        {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </Button>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="email">Email Address</Label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                        <Input id="email" value={user?.email || ""} disabled className="pl-10" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="fullName">Full Name</Label>
-                                    <Input id="fullName" value={user?.full_name || ""} disabled placeholder="Not set" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Role</Label>
-                                    <div className="pt-1">
-                                        <Badge variant="default" className="bg-blue-600">
-                                            {user?.is_staff ? "System Administrator" : "Officer"}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Status</Label>
-                                    <div className="pt-1">
-                                        <Badge variant={user?.is_active ? "default" : "secondary"}>
-                                            {user?.is_active ? "Active" : "Inactive"}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Member Since</Label>
-                                    <Input
-                                        value={user?.date_joined ? new Date(user.date_joined).toLocaleDateString() : "Unknown"}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-
-                            <Alert>
-                                <Shield className="h-4 w-4" />
-                                <AlertDescription>
-                                    As a system administrator, you have full access to all system features and user data.
-                                    Contact your system administrator to modify profile information.
-                                </AlertDescription>
-                            </Alert>
-                        </CardContent>
-                    </Card>
-
-                    {/* Change Password */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Lock className="h-5 w-5" />
-                                Change Password
-                            </CardTitle>
-                            <CardDescription>Update your password to keep your account secure.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handlePasswordChange} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="currentPassword">Current Password</Label>
+                                    <Label htmlFor="newPassword">New Password</Label>
                                     <div className="relative">
                                         <Input
-                                            id="currentPassword"
-                                            type={showCurrentPassword ? "text" : "password"}
-                                            value={passwordForm.currentPassword}
-                                            onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                                            id="newPassword"
+                                            type={showNewPassword ? "text" : "password"}
+                                            value={passwordForm.newPassword}
+                                            onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                                             required
                                         />
                                         <Button
@@ -180,65 +195,42 @@ export function AdminSettingsPage() {
                                             variant="ghost"
                                             size="sm"
                                             className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
                                         >
-                                            {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </Button>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="newPassword">New Password</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="newPassword"
-                                                type={showNewPassword ? "text" : "password"}
-                                                value={passwordForm.newPassword}
-                                                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                                                required
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                onClick={() => setShowNewPassword(!showNewPassword)}
-                                            >
-                                                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="confirmPassword"
-                                                type={showConfirmPassword ? "text" : "password"}
-                                                value={passwordForm.confirmPassword}
-                                                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                                                required
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            >
-                                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </Button>
-                                        </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="confirmPassword"
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            value={passwordForm.confirmPassword}
+                                            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                                            required
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
                                     </div>
                                 </div>
+                            </div>
 
-                                <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary/90">
-                                    {isLoading ? "Changing Password..." : "Change Password"}
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
+                            <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary/90">
+                                {isLoading ? "Changing Password..." : "Change Password"}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )
