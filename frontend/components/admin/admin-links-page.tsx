@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Plus, Eye, Trash2, ExternalLink, Search, Copy, Link, Calendar, CheckSquare, Square } from "lucide-react"
+import { Plus, Eye, Trash2, ExternalLink, Search, Copy, Link, Calendar, CheckSquare, Square, Check } from "lucide-react"
 import { useAdminLinks, useAllCampaigns, useAllOfficers, useCreateMutation, useDeleteMutation } from "@/hooks/use-api"
 import { apiClient } from "@/lib/api"
 
@@ -43,6 +43,7 @@ export function AdminLinksPage() {
   const [deletingLink, setDeletingLink] = useState<AdminLink | null>(null)
   const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set())
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
+  const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set())
   const [newLink, setNewLink] = useState({
     officer: "",
     campaign: "",
@@ -147,8 +148,21 @@ export function AdminLinksPage() {
     setSelectedLinks(newSelected)
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+  const copyToClipboard = (text: string, itemId: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedItems(prev => new Set([...prev, itemId]))
+      // Reset the copied state after 2 seconds
+      setTimeout(() => {
+        setCopiedItems(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(itemId)
+          return newSet
+        })
+      }, 2000)
+    }).catch(() => {
+      // Handle clipboard error gracefully
+      console.error('Failed to copy to clipboard')
+    })
   }
 
   const formatDate = (dateString: string) => {
@@ -351,7 +365,7 @@ export function AdminLinksPage() {
                   </TableHead>
                   <TableHead>Officer</TableHead>
                   <TableHead>Campaign</TableHead>
-                  <TableHead>Ref Code</TableHead>
+                  <TableHead>Referral Link</TableHead>
                   <TableHead>Performance</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
@@ -377,15 +391,21 @@ export function AdminLinksPage() {
                     <TableCell>{link.campaign?.name || "Unknown Campaign"}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
-                          {link.ref_code}
+                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono max-w-xs truncate">
+                          {link.full_link}
                         </code>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyToClipboard(link.ref_code)}
+                          onClick={() => copyToClipboard(link.full_link, `table-link-${link.id}`)}
+                          title="Copy full link"
+                          className={copiedItems.has(`table-link-${link.id}`) ? "text-green-600" : ""}
                         >
-                          <Copy className="h-3 w-3" />
+                          {copiedItems.has(`table-link-${link.id}`) ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
                         </Button>
                       </div>
                     </TableCell>
@@ -479,16 +499,36 @@ export function AdminLinksPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => copyToClipboard(viewingLink.full_link)}
+                      onClick={() => copyToClipboard(viewingLink.full_link, `popup-link-${viewingLink.id}`)}
+                      className={copiedItems.has(`popup-link-${viewingLink.id}`) ? "text-green-600 border-green-600" : ""}
                     >
-                      <Copy className="h-4 w-4" />
+                      {copiedItems.has(`popup-link-${viewingLink.id}`) ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Reference Code</Label>
-                  <Input value={viewingLink.ref_code} readOnly className="bg-muted font-mono" />
+                  <div className="flex items-center gap-2">
+                    <Input value={viewingLink.ref_code} readOnly className="bg-muted font-mono" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(viewingLink.ref_code, `popup-refcode-${viewingLink.id}`)}
+                      title="Copy reference code"
+                      className={copiedItems.has(`popup-refcode-${viewingLink.id}`) ? "text-green-600 border-green-600" : ""}
+                    >
+                      {copiedItems.has(`popup-refcode-${viewingLink.id}`) ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
 
