@@ -162,11 +162,11 @@
 
 **0.4 Revision History**
 
-| Version | Date      | Author / Editor | Changes Made                        |
-| ------- | --------- | --------------- | ----------------------------------- |
-| 1.0     | 8/15/2025 | NAHOM MERGA     | Initial unified documentation draft |
-| 1.1     | 9/27/2025 | NAHOM MERGA     | updated backend  section            |
-|         |           |                 |                                     |
+| Version | Date       | Author / Editor | Changes Made                        |
+| ------- | ---------- | --------------- | ----------------------------------- |
+| 1.0     | 8/15/2025  | NAHOM MERGA     | Initial unified documentation draft |
+| 1.1     | 9/27/2025  | NAHOM MERGA     | updated backend  section            |
+| 1.2     | 10/11/2025 | YONAS ANDUALEM  | updated frontend section            |
 
 ## **Part I — General Overview**
 
@@ -449,118 +449,137 @@ Flow:
 
 **Core Technologies**
 
-- **Framework**: Next.js 14 (App Router) — optimized for SSR/ISR
+- **Framework**: Next.js 15.5.4 (App Router) — configured for static export
     
 - **Language**: TypeScript 5.x (strict type safety)
     
-- **Styling**: Tailwind CSS + Headless UI (utility-first components)
+- **Styling**: Tailwind CSS 4.1.13 + Radix UI primitives (shadcn/ui components)
     
-- **Data Management**: SWR (stale-while-revalidate) + Zustand
+- **Data Management**: Custom hooks with React state management (no external state library)
     
-- **Visualization**: Recharts (lightweight SVG charts)
+- **Visualization**: Recharts 2.13.3 (SVG-based charts)
     
-- **Tables**: TanStack Table (virtualized rows)
+- **UI Components**: 30+ Radix UI components (accordion, dialog, dropdown, etc.)
     
-- **Forms**: React Hook Form + Zod validation
+- **Forms**: React Hook Form 7.63.0 + Zod 4.1.11 validation
     
 
 **Critical Architecture Choices**
 
 1. **JWT Authentication**
     
-    - Access tokens stored in memory (client-side)
+    - Custom TokenManager class with base64 encryption
         
-    - Refresh tokens stored in `httpOnly` cookies (secure)
+    - Tokens stored in localStorage/sessionStorage based on "remember me" preference
         
-2. **API Proxying**
+2. **Static Export Configuration**
     
-    - All backend requests routed through Next.js Route Handlers
+    - Next.js configured with `output: 'export'` for static hosting
         
-    - Prevents direct exposure of DRF endpoints
+    - Direct API calls to backend (no Next.js API proxy)
         
 3. **Real-Time Dashboards**
     
-    - SWR polling at 8-second intervals with automatic revalidation
+    - Auto-refresh every 30 seconds with manual refresh options
         
 4. **Security Protocols**
     
-    - SameSite=Lax cookies
+    - Automatic token refresh on 401 responses
         
     - Zod input validation and sanitization
         
-    - Minimal PII logging on frontend
+    - Role-based access control with ProtectedRoute components
         
 
 
 #### **2. Architecture & Folder Structure**
 
 ```bash
-web/
+frontend/
 ├── app/
-│   ├── (public)/               
-│   │   ├── login/page.tsx            
-│   │   ├── signup-success/page.tsx   
-│   │   └── track/[ref]/page.tsx      
-│   ├── dashboard/              
-│   │   ├── page.tsx            
-│   │   ├── officers/page.tsx   
-│   │   ├── campaigns/page.tsx  
-│   │   ├── links/page.tsx      
-│   │   └── exports/page.tsx    
-│   ├── api/                    
-│   │   ├── auth/               
-│   │   ├── officers/           
-│   │   ├── campaigns/          
-│   │   ├── links/              
-│   │   ├── stats/              
-│   │   └── tracking/           
-│   └── layout.tsx              
+│   ├── admin/
+│   │   ├── layout.tsx
+│   │   ├── page.tsx (AdminDashboard)
+│   │   ├── assignments/page.tsx
+│   │   ├── campaigns/
+│   │   ├── links/
+│   │   ├── settings/
+│   │   ├── tracking/
+│   │   └── users/
+│   ├── login/page.tsx
+│   ├── officer/
+│   │   ├── layout.tsx
+│   │   ├── page.tsx (OfficerDashboard)
+│   │   ├── links/
+│   │   └── settings/
+│   ├── layout.tsx (Root layout with AuthProvider)
+│   ├── page.tsx (Role-based redirection)
+│   └── globals.css
 ├── components/
-│   ├── ui/                     
-│   ├── charts/                 
-│   ├── tables/                 
-│   ├── forms/                  
-│   └── feedback/               
-└── lib/
-    ├── api.ts                  
-    ├── auth.ts                 
-    └── swr.ts                  
+│   ├── admin/ (10 admin-specific components)
+│   ├── officer/ (4 officer-specific components)
+│   ├── auth/
+│   │   └── protected-route.tsx
+│   ├── ui/ (30+ Radix UI-based components)
+│   └── theme-provider.tsx
+├── contexts/
+│   └── auth-context.tsx
+├── hooks/
+│   ├── use-api.ts
+│   ├── use-mobile.ts
+│   ├── use-mutations.ts
+│   └── use-toast.ts
+├── lib/
+│   ├── api.ts (ApiClient class)
+│   ├── auth.ts (TokenManager class)
+│   ├── api-utils.ts
+│   └── utils.ts
+└── public/
+    ├── alx-logo.png
+    └── favicon.ico
 ```
 
 **Route Protection Matrix**
 
 |Path|Access Rules|Security Layer|
 |---|---|---|
-|`/dashboard/**`|`SUPER_ADMIN` or `OFFICER`|Middleware JWT check|
-|`/dashboard/links`|`OFFICER` (read-only)|Component-level RBAC|
-|`/api/admin/**`|`SUPER_ADMIN` only|Server-side role validation|
+|`/admin/**`|`ADMIN` only (is_staff: true)|ProtectedRoute component + role check|
+|`/officer/**`|`OFFICER` only (is_staff: false)|ProtectedRoute component + role check|
+|`/login`|Public (unauthenticated users)|No protection|
+|`/` (root)|Authenticated users|Auto-redirect based on role|
 
 
 #### **3. Authentication Flow**
 
 **Login Sequence**
 
-1. Client submits credentials to `/api/auth/login`
+1. User submits credentials via login form
     
-2. Next.js proxy forwards to DRF `/auth/jwt/create`
+2. `AuthContext.login()` calls `apiClient.login(email, password)`
     
-3. Sets `refresh_token` as `httpOnly` cookie
+3. API client sends POST to `/alxET-rt-api/auth/login/`
     
-4. Returns short-lived `access_token` to client state
+4. Backend responds with JWT tokens and user data
     
-5. Fetches user profile via `/api/me`
+5. `TokenManager` stores tokens (localStorage/sessionStorage based on rememberMe)
+    
+6. User data stored in localStorage for persistence
+    
+7. Auth context updates user state and redirects based on role
 
 
-
-[![Preview](https://i.ibb.co/8DpGnQ6J/Pasted-image-20250815113635.png)](https://github.com/Ethioware-EdTech-Initiative/Referral-Link-Tracker.git)
 
 **Session Maintenance**
 
-- Automatic token refresh on 401 errors
+- Automatic token refresh on 401 responses using refresh token
     
-- Silent re-authentication via refresh token
+- Token validation via `isTokenExpired()` checks JWT expiration
     
-- Global middleware validates JWT for protected routes
+- User data persistence in localStorage survives page refreshes
+    
+- Role determination based on `is_staff` field (admin vs officer)
+    
+- ProtectedRoute components handle client-side route protection
     
 
 #### **4. Data Handling Strategy**
@@ -569,49 +588,49 @@ web/
 
 |Method|Use Case|Example|
 |---|---|---|
-|**SSR**|Initial dashboard load|`getServerSideProps`|
-|**SWR Polling**|Real-time metrics|`useSWR(..., { refreshInterval: 8000 })`|
-|**Optimistic UI**|CRUD operations|Client cache update before API response|
+|**useApi**|Single resource fetch|`useAdminMetrics()`, `useOfficerStats()`|
+|**usePaginatedApi**|Lists with pagination|`useCampaigns()`, `useUsers()`|
+|**Mutation Hooks**|CRUD operations|`useCreateMutation()`, `useDeleteMutation()`|
+|**Real-time Updates**|Dashboard metrics|30-second intervals with manual refresh|
 
 **Error Handling**
 
-- 4xx errors → User-friendly toast notifications
+- Centralized error handling in ApiClient class
     
-- 5xx errors → Fallback UI with retry CTA
+- Automatic token refresh on 401 responses
     
-- Network failures → Exponential backoff retries
+- User-friendly error messages via toast notifications
+    
+- Loading states with consistent UI indicators
+    
+- Standardized error responses with proper HTTP status codes
     
 
 #### **5. Key Functional Modules**
 
-**1. Referral System**
+**1. Dashboard System**
 
-- **Link Generation**
+- **Admin Dashboard**: Real-time metrics cards, interactive charts using Recharts, system status indicators, quick action cards for navigation
     
-    - POST `/api/links` with `{officer_id, campaign_id}`
-        
-    - Returns HMAC-signed URL + QR code
-        
-- **Attribution Tracking**
-    
-    - `/track/[ref]`: Sets referral cookie + logs click
-        
-    - `/signup-success`: Attributes conversions on mount
+- **Officer Dashboard**: Personal performance metrics, campaign-specific statistics, link management interface, historical tracking
         
 
-**2. Dashboard Analytics**
+**2. User Management System**
 
-- **KPI Cards**: Total clicks/signups/conversions
+- **CRUD Operations**: Complete user lifecycle management with role assignment
     
-- **Charts**:
+- **Bulk Operations**: Support for multiple user operations
     
-    - Officer performance rankings
+- **Statistics**: User count aggregation and role distribution tracking
         
-    - Campaign conversion trends
-        
-    - Historical signup velocity
-        
-- **Data source**: `/api/stats` (backend aggregates)
+
+**3. Campaign & Link Management**
+
+- **Campaign Lifecycle**: Creation, assignment, performance tracking with date validation
+    
+- **Link Generation**: Referral link creation per officer/campaign combination with performance tracking
+    
+- **Real-time Monitoring**: Click and conversion tracking with dashboard updates
     
 
 **3. Bulk Operations**
@@ -627,73 +646,77 @@ web/
 
 **Core Protocols**
 
-- `httpOnly` cookies for refresh tokens
+- JWT token security with base64 encryption for basic obfuscation
     
-- CSRF protection via SameSite policies
+- Role-based access control with strict component-level checking
     
-- Strict CSP headers (Vercel-managed)
+- Automatic token refresh prevents session expiration
     
-- Rate limiting UX (debounced actions)
+- ProtectedRoute components enforce authentication and authorization
     
 
 **Data Privacy**
 
-- Minimal PII in UI rendering
+- Configurable token storage (localStorage vs sessionStorage)
     
-- Sensitive field redaction in logs
+- User-friendly error messages without sensitive details
     
-- Google Sheets export compliance
+- Input validation using Zod schemas for form security
+    
+- Minimal PII exposure in client-side code
     
 
 #### **7. Testing Approach**
 
 **Validation Layers**
 
-|Test Type|Tools|Coverage|
+|Test Type|Current Implementation|Coverage|
 |---|---|---|
-|Unit|Vitest + Testing Library|Components/hooks|
-|Integration|Playwright|User workflows|
-|Accessibility|axe-core|WCAG 2.1 AA|
-|Performance|Lighthouse|Core metrics|
+|Type Safety|TypeScript with strict configuration|Compile-time error prevention|
+|Component Testing|Manual testing of UI components|Role-based workflow validation|
+|Code Quality|ESLint configuration|Code consistency and standards|
+|Browser Testing|Cross-browser compatibility testing|Desktop and mobile layouts|
 
 
 #### **8. Implementation Timeline**
 
-| Week | Task                                                                                                                                | Dependencies                  |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| 1    | Scaffolding, auth proxy, layout, design system                                                                                      | Backend JWT API               |
-| 2    | Officers & Campaigns CRUD + tables                                                                                                  | DRF endpoints                 |
-| 3    | Referral Links module + QR + copy                                                                                                   | HMAC service                  |
-| 4    | Dashboard aggregates + charts; SWR real-time                                                                                        | Aggregation API               |
-| 5    | Exports view + thank-you & tracking pages; polish                                                                                   | Tracking service              |
-| 6    | Hardening (accessibility, errors, edge cases), E2E, full integration test; perf & security passes; launch readiness; docs & handoff | Feedback & monitoring systems |
+| Phase | Deliverables | Implementation Details |
+| ---- | ------------ | ---------------------- |
+| Phase 1 | Authentication & Routing | JWT-based auth with TokenManager, role-based routing, ProtectedRoute components |
+| Phase 2 | Admin Dashboard | User management, campaign system, metrics visualization with Recharts |
+| Phase 3 | Officer Dashboard | Personal analytics, link management, performance tracking |
+| Phase 4 | UI/UX & Optimization | Responsive design, theme support, static export configuration |
 
 
 #### **9. Handover Notes**
 
-1. **API Proxy Architecture**
+1. **Direct API Integration**
     
-    - All DRF endpoints accessed exclusively via `/api/**` routes
+    - Direct backend calls via centralized ApiClient class
         
-    - Centralized error handling in fetch wrapper
+    - Base URL configurable via NEXT_PUBLIC_API_URL environment variable
         
-2. **Real-Time Limitations**
+    - Automatic token refresh and error handling
+        
+2. **Static Export Configuration**
     
-    - Current SWR polling can be upgraded to WebSockets if needed
+    - Next.js configured for static hosting (Vercel, Netlify compatible)
         
-3. **Demo Environment**
+    - Build optimizations with tree shaking and asset optimization
+        
+3. **Development Environment**
     
-    - `/track/[ref]` and `/signup-success` are self-contained
+    - TypeScript strict mode with path aliases (@/* imports)
         
-    - Can be tested without production data
+    - Hot reload development server with real-time updates
         
-4. **Backend Integration Points**
+4. **Key Dependencies**
     
-    - Strict adherence to DRF's HMAC signature schema
+    - Next.js 15.5.4 with App Router and static export
         
-    - Shared RBAC permission matrix
+    - Radix UI components with shadcn/ui design system
         
-    - Google Sheets export webhook alignment
+    - Custom authentication and state management (no external state libraries)
         
 
 
